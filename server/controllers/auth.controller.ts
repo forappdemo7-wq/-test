@@ -13,8 +13,9 @@ export class AuthController {
 
   async signin(req: Request, res: Response, next: NextFunction) {
     try {
-      const { login, password } = req.body;
-      const result = await authService.signin(login, password);
+      const { login, identifier, password, rememberMe, clientDevice } = req.body;
+      const loginIdentifier = (login || identifier || '').trim();
+      const result = await authService.signin(loginIdentifier, password);
       res.json({ success: true, ...result });
     } catch (error) {
       next(error);

@@ -271,7 +271,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                     >
                       View Profile
                     </button>
-                    {targetUser.id !== currentUser.id && (
+                    {currentUser && targetUser.id !== currentUser.id && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

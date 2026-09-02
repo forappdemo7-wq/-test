@@ -144,7 +144,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           } z-30 flex items-center gap-0.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-soft-lg px-2 py-1 rounded-full animate-in fade-in zoom-in-90 duration-150`}
         >
           {QUICK_REACTION_EMOJIS.map((emoji) => {
-            const hasUserReacted = reactionsMap[emoji]?.includes(currentUser.id);
+            const hasUserReacted = currentUser?.id ? reactionsMap[emoji]?.includes(currentUser.id) : false;
             return (
               <button
                 key={emoji}

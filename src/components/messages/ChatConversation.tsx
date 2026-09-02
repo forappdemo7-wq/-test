@@ -118,18 +118,19 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
 
   // Subscribe to real-time messages and chat details from Firestore
   useEffect(() => {
-    markChatAsSeenInFirestore(thread.id, currentUser.id);
+    const currentUserId = currentUser?.id || 'guest';
+    markChatAsSeenInFirestore(thread.id, currentUserId);
     markThreadAsSeen(thread.id);
 
     const unsubscribeMessages = listenToChatMessages(thread.id, (firestoreMessages) => {
       if (firestoreMessages.length > 0) {
         setMessages(firestoreMessages);
-        markChatAsSeenInFirestore(thread.id, currentUser.id);
+        markChatAsSeenInFirestore(thread.id, currentUserId);
         markThreadAsSeen(thread.id);
       }
     });
 
-    const unsubscribeTyping = listenToChatTyping(thread.id, currentUser.id, (typing) => {
+    const unsubscribeTyping = listenToChatTyping(thread.id, currentUserId, (typing) => {
       setIsOtherTyping(typing);
     });
 
@@ -146,9 +147,9 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      setTypingStatusInFirestore(thread.id, currentUser.id, false);
+      setTypingStatusInFirestore(thread.id, currentUserId, false);
     };
-  }, [thread.id, currentUser.id]);
+  }, [thread.id, currentUser?.id]);
 
   // Keep local messages in sync when thread or thread.messages changes
   useEffect(() => {
@@ -174,14 +175,18 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
     setInputText(e.target.value);
 
     // Notify other participant of typing status
-    setTypingStatusInFirestore(thread.id, currentUser.id, true);
+    if (currentUser?.id) {
+      setTypingStatusInFirestore(thread.id, currentUser.id, true);
+    }
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      setTypingStatusInFirestore(thread.id, currentUser.id, false);
+      if (currentUser?.id) {
+        setTypingStatusInFirestore(thread.id, currentUser.id, false);
+      }
     }, 2000);
   };
 
@@ -196,7 +201,9 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    setTypingStatusInFirestore(thread.id, currentUser.id, false);
+    if (currentUser?.id) {
+      setTypingStatusInFirestore(thread.id, currentUser.id, false);
+    }
 
     const currentReply = replyingTo;
     setReplyingTo(null);
@@ -352,7 +359,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
   };
 
   const handleInitiateReply = (msg: DirectMessage) => {
-    const isMe = msg.senderId === currentUser.id;
+    const isMe = currentUser ? msg.senderId === currentUser.id : false;
     setReplyingTo({
       id: msg.id,
       text:
@@ -366,7 +373,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
           : msg.mediaUrl
           ? 'Photo'
           : 'Voice note'),
-      senderUsername: isMe ? currentUser.username : thread.participant.username,
+      senderUsername: isMe ? (currentUser?.username || 'You') : thread.participant.username,
       mediaUrl: msg.mediaUrl || msg.videoThumbnail || msg.gifUrl,
     });
   };
@@ -656,7 +663,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
 
           {/* Messages list with MessageBubble component */}
           {filteredMessages.map((msg) => {
-            const isMe = msg.senderId === currentUser.id;
+            const isMe = currentUser ? msg.senderId === currentUser.id : false;
             return (
               <MessageBubble
                 key={msg.id}

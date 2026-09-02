@@ -43,18 +43,22 @@ export class AuthService {
   async signup(data: {
     username: string;
     name: string;
-    email: string;
+    email?: string;
     password?: string;
     avatar?: string;
     bio?: string;
+    website?: string;
+    pronouns?: string;
   }): Promise<{ user: any; tokens: AuthTokens }> {
-    const existingUsername = await userRepository.findByUsername(data.username);
+    const username = data.username.toLowerCase().trim();
+    const existingUsername = await userRepository.findByUsername(username);
     if (existingUsername) {
       throw new ConflictError('Username is already taken');
     }
 
-    const existingEmail = await userRepository.findByEmail(data.email);
-    if (existingEmail) {
+    const email = data.email && data.email.trim() ? data.email.toLowerCase().trim() : `${username}@instavibe.internal`;
+    const existingEmail = await userRepository.findByEmail(email);
+    if (existingEmail && existingEmail.username !== username) {
       throw new ConflictError('Email address is already registered');
     }
 
@@ -64,12 +68,13 @@ export class AuthService {
 
     const user = await userRepository.createUser({
       id: userId,
-      username: data.username.toLowerCase().trim(),
+      username,
       name: data.name.trim(),
-      email: data.email.toLowerCase().trim(),
+      email,
       password_hash: passwordHash,
       avatar: defaultAvatar,
       bio: data.bio || '',
+      website: data.website || '',
       is_verified: false,
     });
 
@@ -90,6 +95,7 @@ export class AuthService {
         email: user.email,
         avatar: user.avatar,
         bio: user.bio,
+        website: user.website,
         isVerified: user.is_verified,
         followersCount: 0,
         followingCount: 0,

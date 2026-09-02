@@ -729,7 +729,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           onClose();
                         }}
                         className={`w-full flex items-center gap-3 p-2 rounded-xl transition-all ${
-                          currentUser.id === user.id
+                          currentUser?.id === user.id
                             ? 'bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800'
                             : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60'
                         }`}
@@ -748,7 +748,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             @{user.username}
                           </p>
                         </div>
-                        {currentUser.id === user.id && (
+                        {currentUser?.id === user.id && (
                           <span className="text-[10px] font-bold text-blue-500 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 rounded-full">
                             Active
                           </span>

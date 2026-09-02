@@ -15,7 +15,7 @@ export const ShareModal: React.FC = () => {
 
   if (!activeSharePost) return null;
 
-  const contacts = availableProfiles.filter((p) => p.id !== currentUser.id);
+  const contacts = availableProfiles.filter((p) => p.id !== currentUser?.id);
 
   const filteredContacts = contacts.filter((p) =>
     p.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -33,7 +33,7 @@ export const ShareModal: React.FC = () => {
 
     selectedUserIds.forEach((userId) => {
       const thread = threads.find((t) => t.participant.id === userId);
-      const threadId = thread ? thread.id : getDeterministicChatId(currentUser.id, userId);
+      const threadId = thread ? thread.id : getDeterministicChatId(currentUser?.id || 'guest', userId);
 
       sendMessage(
         threadId,

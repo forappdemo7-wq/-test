@@ -391,13 +391,13 @@ export const CreateModal: React.FC = () => {
               {/* User Header */}
               <div className="flex items-center gap-3">
                 <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
+                  src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                  alt={currentUser?.name || currentUser?.username || 'User'}
                   referrerPolicy="no-referrer"
                   className="w-9 h-9 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
                 />
                 <span className="text-sm font-bold text-neutral-900 dark:text-white">
-                  {currentUser.username}
+                  {currentUser?.username || 'You'}
                 </span>
               </div>
 

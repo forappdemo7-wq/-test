@@ -26,7 +26,7 @@ export const AddToHighlightModal: React.FC<AddToHighlightModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !currentUser.id) return;
+    if (!isOpen || !currentUser?.id) return;
 
     const fetchHighlights = async () => {
       setLoading(true);
@@ -44,11 +44,11 @@ export const AddToHighlightModal: React.FC<AddToHighlightModalProps> = ({
     };
 
     fetchHighlights();
-  }, [isOpen, currentUser.id]);
+  }, [isOpen, currentUser?.id]);
 
   const handleCreateNewHighlight = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || submitting) return;
+    if (!newTitle.trim() || submitting || !currentUser?.id) return;
 
     setSubmitting(true);
     try {

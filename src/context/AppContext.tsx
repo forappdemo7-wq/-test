@@ -79,7 +79,8 @@ const DEFAULT_GUEST_USER: User = {
 };
 
 interface AppContextType {
-  currentUser: User;
+  currentUser: User | null;
+  isAuthenticated: boolean;
   savedAccounts: User[];
   removeSavedAccount: (userId: string) => void;
   switchProfile: (user: User) => void;
@@ -292,22 +293,27 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User>(() => {
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
       const saved = localStorage.getItem('instavibe_user');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u && u.id && u.id !== 'guest_user') return u;
+      }
     } catch {
       // ignore
     }
-    return DEFAULT_GUEST_USER;
+    return null;
   });
+
+  const isAuthenticated = Boolean(currentUser && currentUser.id && currentUser.id !== 'guest_user');
 
   const [savedAccounts, setSavedAccounts] = useState<User[]>(() => {
     try {
       const saved = localStorage.getItem('instavibe_saved_accounts');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) return parsed.filter((u) => u && u.id && u.id !== 'guest_user');
       }
     } catch {}
     const initialSaved: User[] = [];
@@ -361,14 +367,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return [];
   });
 
-  // Simulated & real online users list
-  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([
-    'sarah_chen',
-    'alex_photo',
-    'elena_vibe',
-    'marcus_dev',
-    'luna_stellar',
-  ]);
+  // Real-time online users list
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
   // Push Notifications state
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() => {
@@ -410,7 +410,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isUserOnline = (userId: string): boolean => {
     if (!userId) return false;
-    return onlineUserIds.includes(userId) || userId === currentUser.id;
+    return onlineUserIds.includes(userId) || (Boolean(currentUser?.id) && userId === currentUser?.id);
   };
 
   const togglePinThread = (threadId: string) => {
@@ -419,7 +419,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ? prev.filter((id) => id !== threadId)
         : [threadId, ...prev];
       try {
-        if (currentUser.id && currentUser.id !== 'guest_user') {
+        if (currentUser?.id && currentUser.id !== 'guest_user') {
           localStorage.setItem(`instavibe_pinned_threads_${currentUser.id}`, JSON.stringify(next));
         }
       } catch {}
@@ -437,7 +437,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeChatUser, setActiveChatUser] = useState<User | null>(null);
 
   const openChatWithUser = (targetUser: User) => {
-    if (!targetUser) return;
+    if (!targetUser || !currentUser?.id) return;
     const chatId = getDeterministicChatId(currentUser.id, targetUser.id);
 
     setThreads((prev) => {
@@ -569,13 +569,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch real data from backend
   const refreshData = useCallback(async () => {
     try {
+      const currentId = currentUser?.id || 'anonymous';
       const [postsRes, storiesRes, reelsRes, usersRes, msgsRes, notifsRes] = await Promise.allSettled([
-        fetch(`/api/posts?currentUserId=${currentUser.id}`),
-        fetch(`/api/stories?currentUserId=${currentUser.id}`),
-        fetch(`/api/reels?currentUserId=${currentUser.id}`),
-        fetch(`/api/users?currentUserId=${currentUser.id}`),
-        fetch(`/api/messages?currentUserId=${currentUser.id}`),
-        fetch(`/api/notifications?currentUserId=${currentUser.id}`),
+        fetch(`/api/posts?currentUserId=${currentId}`),
+        fetch(`/api/stories?currentUserId=${currentId}`),
+        fetch(`/api/reels?currentUserId=${currentId}`),
+        fetch(`/api/users?currentUserId=${currentId}`),
+        fetch(`/api/messages?currentUserId=${currentId}`),
+        fetch(`/api/notifications?currentUserId=${currentId}`),
       ]);
 
       if (postsRes.status === 'fulfilled' && postsRes.value.ok) {
@@ -598,7 +599,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (Array.isArray(data) && data.length > 0) {
           setAvailableProfiles(data);
           // If currentUser is logged in, sync stats only if they actually changed
-          if (currentUser.id && currentUser.id !== 'guest_user') {
+          if (currentUser?.id && currentUser.id !== 'guest_user') {
             const found = data.find((u: User) => u.id === currentUser.id);
             if (found) {
               if (
@@ -629,14 +630,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (error) {
       console.warn('Live data sync encountered non-fatal error:', error);
     }
-  }, [currentUser.id]);
+  }, [currentUser?.id, currentUser?.followersCount, currentUser?.followingCount, currentUser?.postsCount, currentUser?.name, currentUser?.avatar, currentUser?.bio]);
 
   useEffect(() => {
     refreshData();
-    if (currentUser.id && currentUser.id !== 'guest_user') {
+    if (currentUser?.id && currentUser.id !== 'guest_user') {
       syncUserToFirestore(currentUser);
     }
-  }, [currentUser.id]);
+  }, [currentUser?.id, refreshData]);
 
   // Real-time Firestore Listeners for Users and Chats
   useEffect(() => {
@@ -645,7 +646,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setThreads([]);
     setNotifications([]);
 
-    if (!currentUser.id || currentUser.id === 'guest_user') return;
+    if (!currentUser?.id || currentUser.id === 'guest_user') return;
 
     // Listen to real users created on the platform
     const unsubUsers = listenToFirestoreUsers(currentUser.id, (firestoreUsers) => {
@@ -711,7 +712,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubNotifs();
       unsubBlocked();
     };
-  }, [currentUser.id]);
+  }, [currentUser?.id]);
 
   // Auth Operations
   const signIn = async (identifier: string, password: string, rememberMe: boolean = true) => {
@@ -892,7 +893,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const registerPasskey = async () => {
-    if (!currentUser.id || currentUser.id === 'guest_user') {
+    if (!currentUser?.id || currentUser.id === 'guest_user') {
       return { success: false, error: 'Please sign in first to register a passkey' };
     }
     const res = await registerPasskeyOnDevice(currentUser.id, currentUser.name || currentUser.username);
@@ -937,13 +938,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const sessionId = getStoredSessionId();
 
     try {
-      if (options?.allDevices && currentUser.id && currentUser.id !== 'guest_user') {
+      if (options?.allDevices && currentUser?.id && currentUser.id !== 'guest_user') {
         await fetch('/api/auth/logout-all', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: currentUser.id }),
         });
-      } else {
+      } else if (currentUser?.id) {
         await fetch('/api/auth/logout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -959,7 +960,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActiveThreadId(null);
     setThreads([]);
     setNotifications([]);
-    setCurrentUser(DEFAULT_GUEST_USER);
+    setCurrentUser(null);
   };
 
   const requestPasswordReset = async (identifier: string) => {
@@ -993,6 +994,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const sendEmailVerification = async (email?: string) => {
+    if (!currentUser?.id) return { success: false, error: 'Not authenticated' };
     try {
       const res = await fetch('/api/auth/verify-email/send', {
         method: 'POST',
@@ -1008,6 +1010,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const confirmEmailVerification = async (code: string) => {
+    if (!currentUser?.id) return { success: false, error: 'Not authenticated' };
     try {
       const res = await fetch('/api/auth/verify-email/confirm', {
         method: 'POST',
@@ -1028,7 +1031,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const fetchSessions = async () => {
-    if (!currentUser.id || currentUser.id === 'guest_user') return;
+    if (!currentUser?.id || currentUser.id === 'guest_user') return;
     try {
       const currentSessionId = getStoredSessionId();
       const res = await fetch(`/api/auth/sessions?userId=${currentUser.id}&currentSessionId=${currentSessionId || ''}`);
@@ -1040,6 +1043,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const revokeSession = async (sessionId: string) => {
+    if (!currentUser?.id) return;
     try {
       await fetch(`/api/auth/sessions/${sessionId}?userId=${currentUser.id}`, { method: 'DELETE' });
       setActiveSessions((prev) => prev.filter((s) => s.id !== sessionId));
@@ -1049,6 +1053,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logoutAllOtherSessions = async () => {
+    if (!currentUser?.id) return;
     try {
       await fetch('/api/auth/logout-all', {
         method: 'POST',
@@ -1062,7 +1067,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const fetchTrustedDevices = async () => {
-    if (!currentUser.id || currentUser.id === 'guest_user') return;
+    if (!currentUser?.id || currentUser.id === 'guest_user') return;
     try {
       const res = await fetch(`/api/auth/devices?userId=${currentUser.id}`);
       const data = await res.json();
@@ -1097,7 +1102,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const fetchSecurityLogs = async () => {
-    if (!currentUser.id || currentUser.id === 'guest_user') return;
+    if (!currentUser?.id || currentUser.id === 'guest_user') return;
     try {
       const res = await fetch(`/api/auth/security-logs?userId=${currentUser.id}`);
       const data = await res.json();
@@ -1108,6 +1113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const setup2FA = async () => {
+    if (!currentUser?.id) return { success: false, error: 'Not authenticated' };
     try {
       const res = await fetch('/api/auth/2fa/setup', {
         method: 'POST',
@@ -1123,6 +1129,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const enable2FA = async (code: string, secret: string, backupCodes: string[]) => {
+    if (!currentUser?.id) return { success: false, error: 'Not authenticated' };
     try {
       const res = await fetch('/api/auth/2fa/enable', {
         method: 'POST',
@@ -1142,6 +1149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const disable2FA = async (password: string) => {
+    if (!currentUser?.id) return { success: false, error: 'Not authenticated' };
     try {
       const res = await fetch('/api/auth/2fa/disable', {
         method: 'POST',
@@ -1166,7 +1174,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await fetch('/api/auth/resolve-suspicious-alert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alertId: suspiciousAlert.id, action, userId: currentUser.id }),
+        body: JSON.stringify({ alertId: suspiciousAlert.id, action, userId: currentUser?.id }),
       });
 
       if (action === 'lock_and_secure') {
@@ -1190,6 +1198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProfile = async (updated: Partial<User>) => {
+    if (!currentUser) return;
     const updatedUser = { ...currentUser, ...updated };
     setCurrentUser(updatedUser);
     localStorage.setItem('instavibe_user', JSON.stringify(updatedUser));
@@ -1243,6 +1252,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       );
     }
 
+    if (!currentUser?.id) return;
+
     try {
       await fetch(`/api/posts/${postId}/like`, {
         method: 'POST',
@@ -1266,6 +1277,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       );
     }
 
+    if (!currentUser?.id) return;
+
     try {
       await fetch(`/api/posts/${postId}/save`, {
         method: 'POST',
@@ -1278,7 +1291,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addComment = async (postId: string, text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !currentUser) return;
     const tempComment: Comment = {
       id: 'comment_' + Date.now(),
       userId: currentUser.id,
@@ -1406,6 +1419,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     tags?: string[];
     musicTrack?: { title: string; artist: string };
   }) => {
+    if (!currentUser) return;
     const tempId = 'post_' + Date.now();
     const optimisticPost: Post = {
       id: tempId,
@@ -1425,10 +1439,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setPosts((prev) => [optimisticPost, ...prev]);
-    setCurrentUser((prev) => ({
-      ...prev,
-      postsCount: prev.postsCount + 1,
-    }));
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        postsCount: prev.postsCount + 1,
+      };
+    });
     celebrateAction();
     setActiveTab('feed');
 
@@ -1463,10 +1480,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (selectedPostForDetail?.id === postId) {
       setSelectedPostForDetail(null);
     }
-    setCurrentUser((prev) => ({
-      ...prev,
-      postsCount: Math.max(0, prev.postsCount - 1),
-    }));
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        postsCount: Math.max(0, prev.postsCount - 1),
+      };
+    });
 
     try {
       await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
@@ -1522,6 +1542,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     });
 
+    if (!currentUser?.id) return;
+
     try {
       await fetch(`/api/stories/${storyId}/view`, {
         method: 'POST',
@@ -1534,6 +1556,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addNewStory = async (storyItem: { mediaUrl: string; caption?: string; filter?: any }) => {
+    if (!currentUser) return;
     const newItem = {
       id: 'story_' + Date.now(),
       mediaUrl: storyItem.mediaUrl,
@@ -1619,6 +1642,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }))
     );
 
+    if (!currentUser?.id) return nextIsLiked;
+
     try {
       const res = await fetch(`/api/stories/${storyId}/like`, {
         method: 'POST',
@@ -1642,7 +1667,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...g,
           items: g.items.filter((it) => it.id !== storyId),
         }))
-        .filter((g) => g.items.length > 0 || g.userId !== currentUser.id);
+        .filter((g) => g.items.length > 0 || (currentUser?.id && g.userId !== currentUser.id));
     });
 
     try {
@@ -1658,7 +1683,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const fetchReelsByCategory = useCallback(async (cat: 'for_you' | 'following' | 'trending' | 'saved') => {
     setIsLoadingReels(true);
     try {
-      const res = await fetch(`/api/reels?currentUserId=${currentUser.id}&category=${cat}&page=1&limit=15`);
+      const currentId = currentUser?.id || 'anonymous';
+      const res = await fetch(`/api/reels?currentUserId=${currentId}&category=${cat}&page=1&limit=15`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -1673,7 +1699,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsLoadingReels(false);
     }
-  }, [currentUser.id]);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     fetchReelsByCategory(reelCategory);
@@ -1684,7 +1710,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsLoadingReels(true);
     const nextPage = reelsPage + 1;
     try {
-      const res = await fetch(`/api/reels?currentUserId=${currentUser.id}&category=${reelCategory}&page=${nextPage}&limit=15`);
+      const currentId = currentUser?.id || 'anonymous';
+      const res = await fetch(`/api/reels?currentUserId=${currentId}&category=${reelCategory}&page=${nextPage}&limit=15`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -1721,6 +1748,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
 
+    if (!currentUser?.id) return;
+
     try {
       await fetch(`/api/reels/${reelId}/like`, {
         method: 'POST',
@@ -1739,6 +1768,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
+    if (!currentUser?.id) return;
+
     try {
       await fetch(`/api/reels/${reelId}/save`, {
         method: 'POST',
@@ -1751,6 +1782,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const recordReelWatch = async (reelId: string, durationSecs: number, progressPercent: number) => {
+    if (!currentUser?.id) return;
     try {
       await fetch(`/api/reels/${reelId}/watch`, {
         method: 'POST',
@@ -1767,7 +1799,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const fetchWatchHistory = async () => {
-    if (!currentUser.id || currentUser.id === 'guest_user') return;
+    if (!currentUser?.id || currentUser.id === 'guest_user') return;
     try {
       const res = await fetch(`/api/reels/history?currentUserId=${currentUser.id}`);
       if (res.ok) {
@@ -1780,6 +1812,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const clearWatchHistory = async () => {
+    if (!currentUser?.id) return;
     setWatchHistory([]);
     try {
       await fetch('/api/reels/history', {
@@ -1800,6 +1833,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     tags?: string[];
     duration?: number;
   }) => {
+    if (!currentUser?.id) return;
     try {
       const res = await fetch('/api/reels', {
         method: 'POST',
@@ -1827,14 +1861,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Direct Messages & Real-time Chat
   const markThreadAsSeen = async (threadId: string) => {
-    if (!threadId) return;
+    if (!threadId || !currentUser?.id) return;
 
     // 1. Optimistic UI update: reset unreadCount and mark messages seen
     setThreads((prev) =>
       prev.map((th) => {
         if (th.id === threadId) {
           const updatedMsgs = (th.messages || []).map((m) =>
-            m.senderId !== currentUser.id ? { ...m, isSeen: true } : m
+            m.senderId !== currentUser?.id ? { ...m, isSeen: true } : m
           );
           return {
             ...th,
@@ -1887,6 +1921,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isVanish?: boolean;
     }
   ) => {
+    if (!currentUser) return;
     if (
       !text.trim() &&
       !mediaUrl &&
@@ -2048,6 +2083,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const reactToMessage = async (threadId: string, messageId: string, emoji: string) => {
+    if (!currentUser?.id) return;
+    const currentId = currentUser.id;
+
     // 1. Optimistic UI update
     setThreads((prev) =>
       prev.map((th) => {
@@ -2056,17 +2094,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (m.id === messageId) {
               const reactions = { ...(m.reactions || {}) };
               const userList = reactions[emoji] || [];
-              if (userList.includes(currentUser.id)) {
-                const nextUsers = userList.filter((id) => id !== currentUser.id);
+              if (userList.includes(currentId)) {
+                const nextUsers = userList.filter((id) => id !== currentId);
                 if (nextUsers.length === 0) delete reactions[emoji];
                 else reactions[emoji] = nextUsers;
               } else {
                 // Clear existing reactions from this user
                 Object.keys(reactions).forEach((k) => {
-                  reactions[k] = reactions[k].filter((id) => id !== currentUser.id);
+                  reactions[k] = reactions[k].filter((id) => id !== currentId);
                   if (reactions[k].length === 0) delete reactions[k];
                 });
-                reactions[emoji] = [...(reactions[emoji] || []), currentUser.id];
+                reactions[emoji] = [...(reactions[emoji] || []), currentId];
               }
               return {
                 ...m,
@@ -2084,7 +2122,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Persist to Firestore
     try {
-      await reactToMessageWithEmojiInFirestore(threadId, messageId, currentUser.id, emoji);
+      await reactToMessageWithEmojiInFirestore(threadId, messageId, currentId, emoji);
     } catch (err) {
       console.warn('Error saving reaction in Firestore:', err);
     }
@@ -2169,6 +2207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateUserNote = (text: string, emoji: string = '💭') => {
+    if (!currentUser?.id) return;
     setThreads((prev) =>
       prev.map((t) => {
         if (t.participant.id === currentUser.id) {
@@ -2197,7 +2236,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const blockUser = async (targetUserId: string) => {
-    if (!targetUserId || targetUserId === currentUser.id) return;
+    if (!targetUserId || !currentUser?.id || targetUserId === currentUser.id) return;
 
     // 1. Optimistic update
     setBlockedUserIds((prev) => {
@@ -2233,7 +2272,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const unblockUser = async (targetUserId: string) => {
-    if (!targetUserId) return;
+    if (!targetUserId || !currentUser?.id) return;
 
     // 1. Optimistic update
     setBlockedUserIds((prev) => {
@@ -2267,6 +2306,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Notifications
   const markNotificationAsRead = async (id: string) => {
+    if (!currentUser?.id) return;
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     );
@@ -2289,6 +2329,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const markAllNotificationsRead = async () => {
+    if (!currentUser?.id) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
 
     // Sync to Firestore
@@ -2311,6 +2352,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteNotification = async (id: string) => {
+    if (!currentUser?.id) return;
     setNotifications((prev) => prev.filter((n) => n.id !== id));
 
     // Sync to Firestore
@@ -2338,7 +2380,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Try fetching from server if not found in local feed
-    fetch(`/api/posts?currentUserId=${currentUser.id}`)
+    const currentId = currentUser?.id || 'anonymous';
+    fetch(`/api/posts?currentUserId=${currentId}`)
       .then((res) => res.json())
       .then((data: Post[]) => {
         if (Array.isArray(data)) {
@@ -2353,7 +2396,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const unreadMessagesCount = threads.reduce((acc, t) => acc + t.unreadCount, 0);
 
   const toggleFollowUser = async (userId: string) => {
-    if (!userId || userId === currentUser.id) return;
+    if (!userId || !currentUser?.id || userId === currentUser.id) return;
 
     // 1. Optimistic calculation: find if currently following
     let willFollow = true;
@@ -2447,6 +2490,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 7. Optimistic update of currentUser's followingCount
     setCurrentUser((prev) => {
+      if (!prev) return prev;
       const nextFollowingCount = willFollow
         ? (prev.followingCount || 0) + 1
         : Math.max(0, (prev.followingCount || 0) - 1);
@@ -2485,7 +2529,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await fetch(`/api/users/${userId}/follow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentUserId: currentUser.id }),
+        body: JSON.stringify({ currentUserId: currentUser?.id }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -2525,7 +2569,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Real Database queries for followers / following lists
   const openFollowersModal = async (userId: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}/followers?currentUserId=${currentUser.id}`);
+      const currentId = currentUser?.id || '';
+      const res = await fetch(`/api/users/${userId}/followers?currentUserId=${currentId}`);
       if (res.ok) {
         const users = await res.json();
         setUserListModal({ title: 'Followers', users });
@@ -2539,7 +2584,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const openFollowingModal = async (userId: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}/following?currentUserId=${currentUser.id}`);
+      const currentId = currentUser?.id || '';
+      const res = await fetch(`/api/users/${userId}/following?currentUserId=${currentId}`);
       if (res.ok) {
         const users = await res.json();
         setUserListModal({ title: 'Following', users });
@@ -2600,6 +2646,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         currentUser,
+        isAuthenticated,
         savedAccounts,
         removeSavedAccount,
         switchProfile,

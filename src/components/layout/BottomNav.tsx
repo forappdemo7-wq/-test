@@ -71,8 +71,8 @@ export const BottomNav: React.FC = memo(() => {
           }`}
         >
           <img
-            src={currentUser.avatar}
-            alt={currentUser.name}
+            src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+            alt={currentUser?.name || currentUser?.username || 'Profile'}
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"

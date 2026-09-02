@@ -284,8 +284,8 @@ export const CommentsModal: React.FC = () => {
           className="p-3.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-3 bg-white dark:bg-neutral-900"
         >
           <img
-            src={currentUser.avatar}
-            alt={currentUser.name}
+            src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+            alt={currentUser?.name || currentUser?.username || 'User'}
             referrerPolicy="no-referrer"
             className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
           />
@@ -293,7 +293,7 @@ export const CommentsModal: React.FC = () => {
             type="text"
             value={commentText}
             onChange={(e) => setCommentInput(e.target.value)}
-            placeholder={`Comment as ${currentUser.username}...`}
+            placeholder={currentUser ? `Comment as ${currentUser.username}...` : 'Write a comment...'}
             className="flex-1 text-sm bg-neutral-100 dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700 rounded-full px-4 py-2.5 outline-none focus:border-neutral-800 dark:focus:border-neutral-400 text-neutral-900 dark:text-white transition-all"
           />
           <button

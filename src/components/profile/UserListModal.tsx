@@ -57,7 +57,7 @@ export const UserListModal: React.FC = () => {
                 </div>
               </div>
 
-              {u.id !== currentUser.id && (
+              {currentUser && u.id !== currentUser.id && (
                 <button
                   onClick={() => toggleFollowUser(u.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${

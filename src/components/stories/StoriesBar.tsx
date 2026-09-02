@@ -13,12 +13,12 @@ export const StoriesBar: React.FC = () => {
         <div className="flex flex-col items-center flex-shrink-0 cursor-pointer group">
           <div className="relative">
             <StoryRing
-              avatar={currentUser.avatar}
-              username={currentUser.username}
+              avatar={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+              username={currentUser?.username || 'Your story'}
               hasUnseen={false}
               size="md"
               onClick={() => {
-                const myIndex = stories.findIndex((s) => s.userId === currentUser.id);
+                const myIndex = stories.findIndex((s) => currentUser?.id && s.userId === currentUser.id);
                 if (myIndex >= 0 && stories[myIndex].items.length > 0) {
                   openStoryViewer(myIndex);
                 } else {
@@ -44,7 +44,7 @@ export const StoriesBar: React.FC = () => {
 
         {/* Other Users' Stories */}
         {stories
-          .filter((s) => s.userId !== currentUser.id)
+          .filter((s) => s.userId !== currentUser?.id)
           .map((group) => {
             const realIndex = stories.findIndex((s) => s.userId === group.userId);
             return (

@@ -212,7 +212,7 @@ export const NotificationGroupCard: React.FC<NotificationGroupCardProps> = ({
             {actors.map((actor) => {
               const actorProfile = availableProfiles.find((p) => p.id === actor?.id);
               const isFollowed = actorProfile?.isFollowing ?? actor?.isFollowing ?? false;
-              const isMe = actor?.id === currentUser.id;
+              const isMe = currentUser ? actor?.id === currentUser.id : false;
 
               return (
                 <div

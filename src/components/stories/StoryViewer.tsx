@@ -105,7 +105,7 @@ export const StoryViewer: React.FC = () => {
 
   const currentGroup = activeStoryGroupIndex !== null ? stories[activeStoryGroupIndex] : null;
   const currentSlide = currentGroup?.items[currentSlideIndex];
-  const isOwnStory = currentGroup?.userId === currentUser.id;
+  const isOwnStory = currentGroup && currentUser ? currentGroup.userId === currentUser.id : false;
   const isLiked = currentSlide?.isLiked || false;
 
   const isVideoStory = Boolean(
@@ -309,7 +309,7 @@ export const StoryViewer: React.FC = () => {
 
     spawnFloatingParticles(emoji, 18);
 
-    const threadId = getDeterministicChatId(currentUser.id, currentGroup.userId);
+    const threadId = getDeterministicChatId(currentUser?.id || 'guest', currentGroup.userId);
     sendMessage(
       threadId,
       emoji,
@@ -339,7 +339,7 @@ export const StoryViewer: React.FC = () => {
     e.preventDefault();
     if (!replyText.trim() || !currentGroup || !currentSlide) return;
 
-    const threadId = getDeterministicChatId(currentUser.id, currentGroup.userId);
+    const threadId = getDeterministicChatId(currentUser?.id || 'guest', currentGroup.userId);
     sendMessage(
       threadId,
       replyText.trim(),
@@ -906,6 +906,7 @@ export const StoryViewer: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
+                    if (!currentUser) return;
                     setActiveSharePost({
                       id: currentSlide.id,
                       userId: currentUser.id,

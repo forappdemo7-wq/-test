@@ -76,7 +76,7 @@ export const ReelsShareSheet: React.FC<ReelsShareSheetProps> = ({
     );
     const threadId =
       existingThread?.id ||
-      [currentUser.id, targetUser.id].sort().join('_chat_');
+      [currentUser?.id || 'guest', targetUser.id].sort().join('_chat_');
 
     await sendMessage(
       threadId,
@@ -96,7 +96,7 @@ export const ReelsShareSheet: React.FC<ReelsShareSheetProps> = ({
 
   const filteredUsers = availableProfiles.filter(
     (u) =>
-      u.id !== currentUser.id &&
+      u.id !== currentUser?.id &&
       (u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );

@@ -6,6 +6,7 @@ import { BottomNav } from './components/layout/BottomNav';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { InAppMessageToast } from './components/messages/InAppMessageToast';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { AuthPage } from './components/auth/AuthPage';
 import {
   FeedListSkeleton,
   ExploreSkeleton,
@@ -66,6 +67,8 @@ const AuthModal = lazy(() =>
 
 const MainLayout: React.FC = () => {
   const {
+    isAuthenticated,
+    currentUser,
     activeTab,
     setActiveTab,
     setActiveThreadId,
@@ -85,6 +88,10 @@ const MainLayout: React.FC = () => {
     isEditProfileOpen,
     userListModal,
   } = useApp();
+
+  if (!isAuthenticated || !currentUser) {
+    return <AuthPage />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f0f2f5] dark:bg-neutral-950 text-slate-900 dark:text-neutral-100 flex flex-col sm:flex-row transition-colors selection:bg-pink-500 selection:text-white">

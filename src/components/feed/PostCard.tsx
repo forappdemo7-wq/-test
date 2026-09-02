@@ -146,7 +146,7 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
                   ✓
                 </span>
               )}
-              {post.author.id !== currentUser.id && (
+              {post.author.id !== currentUser?.id && (
                 <>
                   <span className="text-xs text-neutral-400">•</span>
                   <button
@@ -209,7 +209,7 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
                 >
                   <Link size={16} /> Copy Link
                 </button>
-                {post.author.id !== currentUser.id && (
+                {post.author.id !== currentUser?.id && (
                   <button
                     onClick={() => {
                       toggleFollowUser(post.author.id);
@@ -228,7 +228,7 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
                     )}
                   </button>
                 )}
-                {post.author.id === currentUser.id && (
+                {currentUser?.id && post.author.id === currentUser.id && (
                   <button
                     onClick={() => {
                       deletePost(post.id);
@@ -535,10 +535,10 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
           className="flex items-center gap-2.5 pt-3 pb-1.5 border-t border-neutral-100 dark:border-neutral-800/80 mt-2.5"
         >
           <img
-            src={currentUser.avatar}
-            alt={currentUser.name}
+            src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+            alt={currentUser?.name || currentUser?.username || 'User'}
             referrerPolicy="no-referrer"
-            className="w-6 h-6 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+            className="w-6 h-6 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 flex-shrink-0"
           />
           <input
             type="text"

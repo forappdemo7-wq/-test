@@ -54,7 +54,7 @@ export const ReelsCommentsDrawer: React.FC<ReelsCommentsDrawerProps> = ({
 
   const handleSendComment = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inputText.trim() || isSubmitting || !reel?.id) return;
+    if (!inputText.trim() || isSubmitting || !reel?.id || !currentUser) return;
 
     const textToSend = inputText.trim();
     setInputText('');
@@ -100,6 +100,7 @@ export const ReelsCommentsDrawer: React.FC<ReelsCommentsDrawerProps> = ({
   };
 
   const handleToggleLikeComment = async (commentId: string) => {
+    if (!currentUser) return;
     setComments((prev) =>
       prev.map((c) => {
         if (c.id === commentId) {
@@ -303,8 +304,8 @@ export const ReelsCommentsDrawer: React.FC<ReelsCommentsDrawerProps> = ({
               className="p-3 border-t border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center gap-2"
             >
               <img
-                src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
-                alt={currentUser.username}
+                src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
+                alt={currentUser?.username || 'User'}
                 referrerPolicy="no-referrer"
                 className="w-8 h-8 rounded-full object-cover shrink-0"
               />
@@ -313,12 +314,13 @@ export const ReelsCommentsDrawer: React.FC<ReelsCommentsDrawerProps> = ({
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder={`Add a comment for @${reel.author?.username || 'creator'}...`}
-                className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 rounded-full px-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                placeholder={currentUser ? `Add a comment for @${reel.author?.username || 'creator'}...` : 'Log in to comment...'}
+                disabled={!currentUser}
+                className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 rounded-full px-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 disabled:opacity-60"
               />
               <button
                 type="submit"
-                disabled={!inputText.trim() || isSubmitting}
+                disabled={!inputText.trim() || isSubmitting || !currentUser}
                 className="p-2 rounded-full bg-rose-500 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-rose-600 transition-colors shrink-0 cursor-pointer shadow-soft-xs"
               >
                 <Send size={16} />

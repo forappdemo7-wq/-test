@@ -306,7 +306,7 @@ export const TrendingHub: React.FC<TrendingHubProps> = ({
                   </div>
                 </div>
 
-                {creator.id !== currentUser.id && (
+                {currentUser && creator.id !== currentUser.id && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

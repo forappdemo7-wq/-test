@@ -70,7 +70,7 @@ export const FeedList: React.FC = () => {
     if (feedMode === 'following') {
       // Show posts from creators currentUser follows or currentUser's own posts
       const followed = initialPosts.filter(
-        (p) => p.author.isFollowing || p.userId === currentUser.id
+        (p) => p.author.isFollowing || (currentUser?.id && p.userId === currentUser.id)
       );
       return followed;
     }
@@ -98,7 +98,7 @@ export const FeedList: React.FC = () => {
 
       return totalB - totalA;
     });
-  }, [initialPosts, feedMode, currentUser.id]);
+  }, [initialPosts, feedMode, currentUser?.id]);
 
   // Virtualized infinite stream window
   const visiblePosts = useMemo(() => {
@@ -158,7 +158,7 @@ export const FeedList: React.FC = () => {
   };
 
   const suggestedUsers = availableProfiles
-    .filter((u) => u.id !== currentUser.id && !u.isFollowing)
+    .filter((u) => u.id !== currentUser?.id && !u.isFollowing)
     .slice(0, 5);
 
   return (
@@ -343,32 +343,34 @@ export const FeedList: React.FC = () => {
         {/* Right Desktop Sidebar: User info & Suggested Profiles */}
         <div className="hidden lg:block w-80 space-y-5 pt-1">
           {/* Current User Card */}
-          <div className="flex items-center justify-between p-3.5 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 shadow-soft">
-            <div
-              onClick={() => setActiveTab('profile')}
-              className="flex items-center gap-3 cursor-pointer group min-w-0"
-            >
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                referrerPolicy="no-referrer"
-                className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 group-hover:scale-105 transition-transform"
-              />
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-neutral-900 dark:text-white truncate group-hover:underline">
-                  {currentUser.username}
-                </p>
-                <p className="text-xs text-neutral-400 truncate">{currentUser.name}</p>
+          {currentUser && (
+            <div className="flex items-center justify-between p-3.5 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 shadow-soft">
+              <div
+                onClick={() => setActiveTab('profile')}
+                className="flex items-center gap-3 cursor-pointer group min-w-0"
+              >
+                <img
+                  src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'}
+                  alt={currentUser.name || currentUser.username}
+                  referrerPolicy="no-referrer"
+                  className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 group-hover:scale-105 transition-transform"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white truncate group-hover:underline">
+                    {currentUser.username}
+                  </p>
+                  <p className="text-xs text-neutral-400 truncate">{currentUser.name}</p>
+                </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => setIsEditProfileOpen(true)}
-              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline cursor-pointer flex-shrink-0"
-            >
-              Switch
-            </button>
-          </div>
+              <button
+                onClick={() => setIsEditProfileOpen(true)}
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline cursor-pointer flex-shrink-0"
+              >
+                Switch
+              </button>
+            </div>
+          )}
 
           {/* Suggested For You */}
           {suggestedUsers.length > 0 && (

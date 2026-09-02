@@ -29,7 +29,7 @@ export const StoryArchiveModal: React.FC<StoryArchiveModalProps> = ({ isOpen, on
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isOpen || !currentUser.id) return;
+    if (!isOpen || !currentUser?.id) return;
 
     const fetchArchive = async () => {
       setLoading(true);
@@ -47,7 +47,7 @@ export const StoryArchiveModal: React.FC<StoryArchiveModalProps> = ({ isOpen, on
     };
 
     fetchArchive();
-  }, [isOpen, currentUser.id]);
+  }, [isOpen, currentUser?.id]);
 
   const handleReshareToStory = async (item: ArchivedStoryItem) => {
     await addNewStory({

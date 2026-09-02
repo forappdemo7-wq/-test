@@ -5,12 +5,12 @@ import { useApp } from '../../context/AppContext';
 export const EditProfileModal: React.FC = () => {
   const { currentUser, updateProfile, isEditProfileOpen, setIsEditProfileOpen, celebrateAction } = useApp();
 
-  const [name, setName] = useState(currentUser.name);
-  const [username, setUsername] = useState(currentUser.username);
-  const [bio, setBio] = useState(currentUser.bio);
-  const [website, setWebsite] = useState(currentUser.website || '');
-  const [pronouns, setPronouns] = useState(currentUser.pronouns || '');
-  const [avatar, setAvatar] = useState(currentUser.avatar);
+  const [name, setName] = useState(currentUser?.name || '');
+  const [username, setUsername] = useState(currentUser?.username || '');
+  const [bio, setBio] = useState(currentUser?.bio || '');
+  const [website, setWebsite] = useState(currentUser?.website || '');
+  const [pronouns, setPronouns] = useState(currentUser?.pronouns || '');
+  const [avatar, setAvatar] = useState(currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80');
 
   if (!isEditProfileOpen) return null;
 

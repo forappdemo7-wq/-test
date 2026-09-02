@@ -371,7 +371,7 @@ export const ReelItem: React.FC<ReelItemProps> = ({
             </div>
 
             {/* Follow Toggle Button */}
-            {reel.author && reel.author.id !== currentUser.id && (
+            {reel.author && currentUser && reel.author.id !== currentUser.id && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

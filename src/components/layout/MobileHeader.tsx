@@ -50,7 +50,7 @@ export const MobileHeader: React.FC = () => {
             >
               <Lock size={14} className="text-neutral-700 dark:text-neutral-300 stroke-[2.5]" />
               <span className="text-lg font-bold tracking-tight text-neutral-950 dark:text-white">
-                {currentUser.username}
+                {currentUser?.username || 'Profile'}
               </span>
               <ChevronDown
                 size={16}
@@ -75,7 +75,7 @@ export const MobileHeader: React.FC = () => {
                         setIsProfileDropdownOpen(false);
                       }}
                       className={`w-full flex items-center justify-between p-2.5 rounded-2xl text-left transition-all duration-150 cursor-pointer ${
-                        currentUser.id === p.id
+                        currentUser?.id === p.id
                           ? 'bg-neutral-100 dark:bg-neutral-800/80 font-bold text-neutral-950 dark:text-white shadow-soft-xs'
                           : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200'
                       }`}
@@ -92,7 +92,7 @@ export const MobileHeader: React.FC = () => {
                           <p className="text-xs text-neutral-500 truncate">{p.name}</p>
                         </div>
                       </div>
-                      {currentUser.id === p.id && <Check size={16} className="text-blue-500 stroke-[2.5]" />}
+                      {currentUser?.id === p.id && <Check size={16} className="text-blue-500 stroke-[2.5]" />}
                     </button>
                   ))}
                 </div>

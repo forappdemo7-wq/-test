@@ -49,7 +49,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
 
   if (!user) return null;
 
-  const isCurrentUser = user.id === currentUser.id;
+  const isCurrentUser = currentUser ? user.id === currentUser.id : false;
   const isBlocked = blockedUserIds.includes(user.id);
   const userPosts = posts.filter((p) => p.author.id === user.id);
   const userReels = reels.filter((r) => r.author.id === user.id);

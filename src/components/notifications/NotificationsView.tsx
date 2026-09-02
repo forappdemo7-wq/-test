@@ -303,6 +303,7 @@ export const NotificationsView: React.FC = () => {
   };
 
   const handleReplyComment = async (notifId: string, postId: string, text: string) => {
+    if (!currentUser?.id) return;
     try {
       await fetch(`/api/notifications/${notifId}/reply`, {
         method: 'POST',
@@ -321,6 +322,7 @@ export const NotificationsView: React.FC = () => {
   };
 
   const handleSimulateLiveNotification = async (type: 'like' | 'comment' | 'follow' | 'story_like' | 'mention' = 'like') => {
+    if (!currentUser?.id) return;
     try {
       const res = await fetch('/api/notifications/simulate', {
         method: 'POST',

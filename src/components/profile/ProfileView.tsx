@@ -45,15 +45,15 @@ export const ProfileView: React.FC = () => {
   const [highlights, setHighlights] = useState<HighlightItem[]>([]);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
-  const myPosts = posts.filter((p) => p.author.id === currentUser.id);
+  const myPosts = posts.filter((p) => currentUser?.id && p.author.id === currentUser.id);
   const mySavedPosts = posts.filter((p) => p.isSaved || (savedPostIds && savedPostIds.includes(p.id)));
-  const myReels = reels.filter((r) => r.author.id === currentUser.id);
+  const myReels = reels.filter((r) => currentUser?.id && r.author.id === currentUser.id);
 
-  const myStoryIndex = stories.findIndex((s) => s.userId === currentUser.id);
+  const myStoryIndex = stories.findIndex((s) => currentUser?.id && s.userId === currentUser.id);
 
   // Fetch highlights for currentUser
   useEffect(() => {
-    if (!currentUser.id) return;
+    if (!currentUser?.id) return;
     const fetchHighlights = async () => {
       try {
         const res = await fetch(`/api/users/${currentUser.id}/highlights`);
@@ -66,7 +66,11 @@ export const ProfileView: React.FC = () => {
       }
     };
     fetchHighlights();
-  }, [currentUser.id]);
+  }, [currentUser?.id]);
+
+  if (!currentUser) {
+    return null;
+  }
 
   const handleOpenHighlight = (hl: HighlightItem) => {
     if (!hl.items || hl.items.length === 0) return;

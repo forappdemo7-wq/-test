@@ -53,8 +53,8 @@ export const DirectMessagesView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedTab, setSelectedTab] = useState<'primary' | 'general' | 'requests'>('primary');
   const [isEditingNote, setIsEditingNote] = useState(false);
-  const [noteInput, setNoteInput] = useState(currentUser.note?.text || '');
-  const [noteEmoji, setNoteEmoji] = useState(currentUser.note?.emoji || '✨');
+  const [noteInput, setNoteInput] = useState(currentUser?.note?.text || '');
+  const [noteEmoji, setNoteEmoji] = useState(currentUser?.note?.emoji || '✨');
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [selectedNoteUser, setSelectedNoteUser] = useState<User | null>(null);
@@ -70,13 +70,13 @@ export const DirectMessagesView: React.FC = () => {
       activeChatUser ||
       availableProfiles.find((u) => {
         if (!activeThreadId) return false;
-        const targetChatId = getDeterministicChatId(currentUser.id, u.id);
+        const targetChatId = getDeterministicChatId(currentUser?.id || 'guest', u.id);
         return targetChatId === activeThreadId || activeThreadId.includes(u.id);
       });
 
     if (otherUser) {
       activeThread = {
-        id: activeThreadId || getDeterministicChatId(currentUser.id, otherUser.id),
+        id: activeThreadId || getDeterministicChatId(currentUser?.id || 'guest', otherUser.id),
         participant: otherUser,
         lastMessage: '',
         lastMessageTime: 'Just now',
@@ -163,7 +163,7 @@ export const DirectMessagesView: React.FC = () => {
             className="flex items-center gap-1.5 text-left focus:outline-none cursor-pointer py-1"
           >
             <span className="text-lg font-bold text-neutral-950 dark:text-white tracking-tight">
-              {currentUser.username}
+              {currentUser?.username || 'Messages'}
             </span>
             <ChevronDown
               size={16}
@@ -191,7 +191,7 @@ export const DirectMessagesView: React.FC = () => {
                     setIsAccountMenuOpen(false);
                   }}
                   className={`w-full flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${
-                    p.id === currentUser.id
+                    currentUser?.id === p.id
                       ? 'bg-neutral-100 dark:bg-neutral-800 font-bold text-neutral-950 dark:text-white'
                       : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300'
                   }`}
@@ -208,7 +208,7 @@ export const DirectMessagesView: React.FC = () => {
                       <p className="text-[10px] text-neutral-400 leading-tight truncate">{p.name}</p>
                     </div>
                   </div>
-                  {p.id === currentUser.id && (
+                  {currentUser?.id === p.id && (
                     <span className="w-2 h-2 rounded-full bg-blue-500 mr-1" />
                   )}
                 </button>
@@ -260,14 +260,14 @@ export const DirectMessagesView: React.FC = () => {
         <div className="flex flex-col items-center flex-shrink-0 cursor-pointer group">
           <div
             onClick={() => {
-              setNoteInput(currentUser.note?.text || '');
-              setNoteEmoji(currentUser.note?.emoji || '✨');
+              setNoteInput(currentUser?.note?.text || '');
+              setNoteEmoji(currentUser?.note?.emoji || '✨');
               setIsEditingNote(true);
             }}
             className="relative"
           >
             {/* Note Bubble Tag */}
-            {currentUser.note?.text ? (
+            {currentUser?.note?.text ? (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200/90 dark:border-neutral-700 shadow-soft-sm px-2.5 py-1 rounded-2xl text-[10px] font-semibold flex items-center gap-1 max-w-[90px] truncate animate-in zoom-in-90">
                 <span>{currentUser.note.emoji || '💭'}</span>
                 <span className="truncate">{currentUser.note.text}</span>
@@ -279,8 +279,8 @@ export const DirectMessagesView: React.FC = () => {
             )}
 
             <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
+              src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+              alt={currentUser?.name || currentUser?.username || 'User'}
               referrerPolicy="no-referrer"
               className="w-16 h-16 rounded-full object-cover border-2 border-neutral-200 dark:border-neutral-800 group-hover:scale-105 transition-transform"
             />
@@ -292,7 +292,7 @@ export const DirectMessagesView: React.FC = () => {
 
         {/* Friend Notes List */}
         {availableProfiles
-          .filter((p) => p.id !== currentUser.id && p.note?.text)
+          .filter((p) => p.id !== currentUser?.id && p.note?.text)
           .map((friend) => (
             <div
               key={friend.id}
@@ -659,7 +659,7 @@ export const DirectMessagesView: React.FC = () => {
 
               <div className="space-y-2">
                 {availableProfiles
-                  .filter((p) => p.id !== currentUser.id)
+                  .filter((p) => p.id !== currentUser?.id)
                   .slice(0, 5)
                   .map((user) => (
                     <div

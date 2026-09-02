@@ -149,7 +149,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose 
 
             <div className="space-y-1.5">
               {(savedAccounts.length > 0 ? savedAccounts : availableProfiles.filter((u) => u.id !== 'guest_user')).map((user) => {
-                const isCurrent = currentUser.id === user.id;
+                const isCurrent = currentUser ? currentUser.id === user.id : false;
                 return (
                   <div
                     key={user.id}
@@ -519,7 +519,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose 
                 className="w-full flex items-center gap-3.5 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left text-red-600 dark:text-red-400 font-semibold text-sm cursor-pointer"
               >
                 <LogOut size={20} />
-                <span>Log out @{currentUser.username}</span>
+                <span>Log out {currentUser ? `@${currentUser.username}` : ''}</span>
               </button>
             </div>
           </div>
@@ -531,7 +531,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose 
             <div className="w-full max-w-xs bg-white dark:bg-neutral-900 rounded-3xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-2xl text-center space-y-4">
               <div className="space-y-1">
                 <h4 className="font-bold text-base text-neutral-950 dark:text-white">
-                  Log out of @{currentUser.username}?
+                  Log out of {currentUser ? `@${currentUser.username}` : 'account'}?
                 </h4>
                 <p className="text-xs text-neutral-500 leading-relaxed">
                   You will need to log back in to access your profile, saved posts, and direct messages.
