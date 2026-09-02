@@ -1,0 +1,6 @@
+{
+  "name": "InstaVibe",
+  "description": "A responsive, feature-rich social media platform with interactive stories, feeds, reels, direct messages, photo filters, and explore discovery.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

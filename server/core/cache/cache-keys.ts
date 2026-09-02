@@ -1,0 +1,15 @@
+export const CacheKeys = {
+  user: (id: string) => `user:${id}`,
+  userProfile: (username: string) => `user:profile:${username}`,
+  userFollowers: (id: string) => `user:${id}:followers`,
+  userFollowing: (id: string) => `user:${id}:following`,
+  post: (id: string) => `post:${id}`,
+  feed: (userId: string, page: number) => `feed:${userId}:${page}`,
+  explorePosts: (category: string, page: number) => `explore:${category}:${page}`,
+  reels: (category: string, page: number) => `reels:${category}:${page}`,
+  storyGroups: () => `stories:groups`,
+  storyArchive: (userId: string) => `stories:archive:${userId}`,
+  userHighlights: (userId: string) => `highlights:${userId}`,
+  unreadNotificationsCount: (userId: string) => `notifications:unread:${userId}`,
+  rateLimit: (key: string) => `ratelimit:${key}`,
+};

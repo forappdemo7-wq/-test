@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "users": {
+      "title": "Users",
+      "description": "Registered app users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "username"]
+    },
+    "chats": {
+      "title": "Chats",
+      "description": "Direct message chat threads between users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "participantDetails": { "type": "object" },
+        "lastMessage": { "type": "string" },
+        "lastMessageTime": { "type": "string" },
+        "lastSenderId": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["participants"]
+    },
+    "messages": {
+      "title": "Messages",
+      "description": "Messages inside a chat thread",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderUsername": { "type": "string" },
+        "senderAvatar": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "text": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "reaction": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isSeen": { "type": "boolean" }
+      },
+      "required": ["senderId", "text"]
+    }
+  },
+  "firestore": {
+    "rules": {
+      "chats": {
+        "read": "true",
+        "write": "true"
+      },
+      "chats/{chatId}/messages": {
+        "read": "true",
+        "write": "true"
+      },
+      "users": {
+        "read": "true",
+        "write": "true"
+      }
+    }
+  }
+}
