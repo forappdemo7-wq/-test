@@ -28,6 +28,7 @@ export class StoryRepository extends BaseRepository<any> {
         OR s.user_id = $1
         OR EXISTS(SELECT 1 FROM close_friends WHERE user_id = s.user_id AND friend_id = $1)
       )
+      AND s.created_at >= NOW() - INTERVAL '24 hours'
       ORDER BY s.created_at DESC`,
       [currentUserId || 'none']
     );
