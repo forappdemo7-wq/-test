@@ -22,8 +22,18 @@ router.get(
 );
 
 router.get('/:id/followers', optionalAuth, userController.getFollowers.bind(userController));
+router.delete('/:id/followers/:followerId', optionalAuth, userController.removeFollower.bind(userController));
+router.post('/:id/followers/:followerId/remove', optionalAuth, userController.removeFollower.bind(userController));
 router.get('/:id/following', optionalAuth, userController.getFollowing.bind(userController));
 router.get('/:id/highlights', highlightController.getUserHighlights.bind(highlightController));
+
+router.get('/:id/close-friends', optionalAuth, userController.getCloseFriends.bind(userController));
+router.post('/:id/close-friends', optionalAuth, userController.setCloseFriends.bind(userController));
+router.post('/:id/close-friends/:friendId/toggle', optionalAuth, userController.toggleCloseFriend.bind(userController));
+
+router.get('/:id/restricted', optionalAuth, userController.getRestrictedUsers.bind(userController));
+router.post('/:id/restrict', optionalAuth, userController.restrictUser.bind(userController));
+router.post('/:id/unrestrict', optionalAuth, userController.unrestrictUser.bind(userController));
 
 router.post('/:id/block', optionalAuth, userController.blockUser.bind(userController));
 router.post('/:id/unblock', optionalAuth, userController.unblockUser.bind(userController));

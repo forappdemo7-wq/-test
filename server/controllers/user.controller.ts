@@ -131,6 +131,81 @@ export class UserController {
       next(error);
     }
   }
+
+  async removeFollower(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = (req.query.currentUserId as string) || req.body.currentUserId || req.user?.id || req.params.id;
+      const followerId = req.params.followerId || req.body.followerId;
+      const result = await userService.removeFollower(currentUserId, followerId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCloseFriends(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = (req.query.currentUserId as string) || req.user?.id || req.params.id;
+      const friends = await userService.getCloseFriends(currentUserId);
+      res.json(friends);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async toggleCloseFriend(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = req.body.currentUserId || req.user?.id || req.params.id;
+      const friendId = req.params.friendId || req.body.friendId;
+      const result = await userService.toggleCloseFriend(currentUserId, friendId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async setCloseFriends(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = req.body.currentUserId || req.user?.id || req.params.id;
+      const friendIds = req.body.friendIds || [];
+      const result = await userService.setCloseFriends(currentUserId, friendIds);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getRestrictedUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = (req.query.currentUserId as string) || req.user?.id || req.params.id;
+      const users = await userService.getRestrictedUsers(currentUserId);
+      res.json(users);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async restrictUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = req.body.currentUserId || req.user?.id;
+      const targetUserId = req.params.id || req.body.targetUserId;
+      const result = await userService.restrictUser(currentUserId, targetUserId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async unrestrictUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = req.body.currentUserId || req.user?.id;
+      const targetUserId = req.params.id || req.body.targetUserId;
+      const result = await userService.unrestrictUser(currentUserId, targetUserId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const userController = new UserController();

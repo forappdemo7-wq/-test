@@ -24,6 +24,8 @@ export class PostService {
         timestamp: c.created_at,
         likesCount: c.likes_count || 0,
         isLiked: c.isLiked || false,
+        isApproved: c.is_approved !== false,
+        isRestricted: Boolean(c.isCommenterRestricted || c.is_approved === false),
       });
     }
 
@@ -188,12 +190,12 @@ export class PostService {
 
   async addComment(postId: string, userId: string, text: string) {
     const commentId = `comm_${Date.now()}`;
-    await postRepository.addComment(commentId, postId, userId, text.trim());
+    const { isApproved } = await postRepository.addComment(commentId, postId, userId, text.trim());
 
     const user = await userRepository.findById(userId);
     const post = await postRepository.findById(postId);
 
-    if (post && post.user_id !== userId) {
+    if (post && post.user_id !== userId && isApproved) {
       const media = typeof post.media === 'string' ? JSON.parse(post.media) : post.media;
       await jobQueue.add(JobType.DISPATCH_NOTIFICATION, {
         recipientId: post.user_id,
@@ -214,7 +216,19 @@ export class PostService {
       timestamp: 'Just now',
       likesCount: 0,
       isLiked: false,
+      isApproved,
+      isRestricted: !isApproved,
     };
+  }
+
+  async approveComment(commentId: string) {
+    await postRepository.approveComment(commentId);
+    return { success: true, commentId };
+  }
+
+  async deleteComment(commentId: string, postId: string) {
+    await postRepository.deleteComment(commentId, postId);
+    return { success: true, commentId };
   }
 }
 

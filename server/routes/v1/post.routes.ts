@@ -23,4 +23,16 @@ router.post(
   postController.addComment.bind(postController)
 );
 
+router.post(
+  '/:id/comments/:commentId/approve',
+  optionalAuth,
+  postController.approveComment.bind(postController)
+);
+
+router.delete(
+  '/:id/comments/:commentId',
+  optionalAuth,
+  postController.deleteComment.bind(postController)
+);
+
 export const postRoutes = router;

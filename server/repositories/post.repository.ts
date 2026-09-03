@@ -58,10 +58,18 @@ export class PostRepository extends BaseRepository<PostEntity> {
         c.*,
         u.username,
         u.avatar as user_avatar,
-        EXISTS(SELECT 1 FROM comment_likes WHERE comment_id = c.id AND user_id = $1) as "isLiked"
+        EXISTS(SELECT 1 FROM comment_likes WHERE comment_id = c.id AND user_id = $1) as "isLiked",
+        p.user_id as post_author_id,
+        EXISTS(SELECT 1 FROM restricted_users WHERE user_id = p.user_id AND restricted_id = c.user_id) as "isCommenterRestricted"
       FROM comments c
+      JOIN posts p ON c.post_id = p.id
       JOIN users u ON c.user_id = u.id
       WHERE c.post_id = ANY($2::varchar[])
+      AND (
+        COALESCE(c.is_approved, true) = true
+        OR c.user_id = $1
+        OR p.user_id = $1
+      )
       ORDER BY c.created_at ASC`,
       [currentUserId || 'none', postIds]
     );
@@ -132,11 +140,37 @@ export class PostRepository extends BaseRepository<PostEntity> {
   }
 
   async addComment(commentId: string, postId: string, userId: string, text: string): Promise<any> {
+    // Check if the post author has restricted the commenter
+    let isApproved = true;
+    try {
+      const postRes = await query('SELECT user_id FROM posts WHERE id = $1', [postId]);
+      const authorId = postRes.rows[0]?.user_id;
+      if (authorId && authorId !== userId) {
+        const restrictedRes = await query(
+          'SELECT 1 FROM restricted_users WHERE user_id = $1 AND restricted_id = $2',
+          [authorId, userId]
+        );
+        if (restrictedRes.rows.length > 0) {
+          isApproved = false;
+        }
+      }
+    } catch {}
+
     await query(
-      `INSERT INTO comments (id, post_id, user_id, text, likes_count) VALUES ($1, $2, $3, $4, 0)`,
-      [commentId, postId, userId, text]
+      `INSERT INTO comments (id, post_id, user_id, text, likes_count, is_approved) VALUES ($1, $2, $3, $4, 0, $5)`,
+      [commentId, postId, userId, text, isApproved]
     );
     await query('UPDATE posts SET comments_count = comments_count + 1 WHERE id = $1', [postId]);
+    return { isApproved };
+  }
+
+  async approveComment(commentId: string): Promise<void> {
+    await query('UPDATE comments SET is_approved = true WHERE id = $1', [commentId]);
+  }
+
+  async deleteComment(commentId: string, postId: string): Promise<void> {
+    await query('DELETE FROM comments WHERE id = $1', [commentId]);
+    await query('UPDATE posts SET comments_count = GREATEST(0, comments_count - 1) WHERE id = $1', [postId]);
   }
 }
 

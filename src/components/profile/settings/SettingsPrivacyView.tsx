@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Lock, Star, Ban, Check, UserPlus, Search, ShieldCheck, UserCheck, X, Clock, AlertCircle } from 'lucide-react';
+import {
+  Lock,
+  Star,
+  Ban,
+  Check,
+  UserPlus,
+  Search,
+  ShieldCheck,
+  UserCheck,
+  X,
+  Clock,
+  AlertCircle,
+  ShieldAlert,
+} from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 
 export const SettingsPrivacyView: React.FC = () => {
@@ -11,12 +24,17 @@ export const SettingsPrivacyView: React.FC = () => {
     blockedUserIds,
     blockUser,
     unblockUser,
+    closeFriendIds,
+    toggleCloseFriend,
+    restrictedUserIds,
+    restrictUser,
+    unrestrictUser,
     pendingFollowRequests,
     acceptFollowRequest,
     declineFollowRequest,
   } = useApp();
 
-  const [subSection, setSubSection] = useState<'main' | 'close_friends' | 'blocked' | 'requests'>('main');
+  const [subSection, setSubSection] = useState<'main' | 'close_friends' | 'blocked' | 'restricted' | 'requests'>('main');
   const [isPrivate, setIsPrivate] = useState<boolean>(Boolean(currentUser?.isPrivate));
   const [showPrivateConfirm, setShowPrivateConfirm] = useState(false);
   const [showPublicConfirm, setShowPublicConfirm] = useState(false);
@@ -28,9 +46,9 @@ export const SettingsPrivacyView: React.FC = () => {
     }
   }, [currentUser?.isPrivate]);
 
-  // Close friends list
-  const [closeFriendIds, setCloseFriendIds] = useState<string[]>([]);
+  // Search queries
   const [friendSearch, setFriendSearch] = useState('');
+  const [restrictedSearch, setRestrictedSearch] = useState('');
 
   const otherUsers = availableProfiles.filter((u) => u.id !== currentUser?.id);
 
@@ -40,17 +58,29 @@ export const SettingsPrivacyView: React.FC = () => {
       u.name.toLowerCase().includes(friendSearch.toLowerCase())
   );
 
-  const toggleCloseFriend = (userId: string) => {
-    setCloseFriendIds((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
-    );
-  };
+  const filteredUsersForRestrict = otherUsers.filter(
+    (u) =>
+      u.username.toLowerCase().includes(restrictedSearch.toLowerCase()) ||
+      u.name.toLowerCase().includes(restrictedSearch.toLowerCase())
+  );
 
   const handleToggleBlock = async (userId: string) => {
     if (blockedUserIds.includes(userId)) {
       await unblockUser(userId);
+      toast.success('User unblocked');
     } else {
       await blockUser(userId);
+      toast.success('User blocked');
+    }
+  };
+
+  const handleToggleRestrict = async (userId: string, username: string) => {
+    if (restrictedUserIds.includes(userId)) {
+      await unrestrictUser(userId);
+      toast.success(`Unrestricted @${username}`);
+    } else {
+      await restrictUser(userId);
+      toast.success(`Restricted @${username}`);
     }
   };
 
@@ -304,6 +334,139 @@ export const SettingsPrivacyView: React.FC = () => {
     );
   }
 
+  if (subSection === 'restricted') {
+    return (
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <ShieldAlert size={20} className="text-amber-500" />
+            <h3 className="text-sm font-bold text-neutral-950 dark:text-white">
+              Restricted Accounts ({restrictedUserIds.length})
+            </h3>
+          </div>
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            Protect yourself from unwanted interactions without having to block or unfollow someone.
+          </p>
+          <ul className="text-[11px] text-neutral-500 dark:text-neutral-400 list-disc list-inside space-y-1 pt-1">
+            <li>Their comments on your posts will only be visible to them unless you approve them.</li>
+            <li>They won&apos;t see when you&apos;re online or if you&apos;ve read their messages.</li>
+            <li>Their direct messages will automatically go to your Message Requests.</li>
+          </ul>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <input
+            type="text"
+            placeholder="Search accounts to restrict..."
+            value={restrictedSearch}
+            onChange={(e) => setRestrictedSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl text-xs text-neutral-900 dark:text-white placeholder-neutral-400 outline-none focus:ring-1 focus:ring-amber-500"
+          />
+        </div>
+
+        {/* User list */}
+        <div className="space-y-2 max-h-[340px] overflow-y-auto no-scrollbar">
+          {restrictedUserIds.length > 0 && !restrictedSearch && (
+            <div className="space-y-1.5 pb-2">
+              <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+                Restricted ({restrictedUserIds.length})
+              </p>
+              {otherUsers
+                .filter((u) => restrictedUserIds.includes(u.id))
+                .map((u) => (
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/60"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        referrerPolicy="no-referrer"
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-neutral-950 dark:text-white">
+                          {u.username}
+                        </p>
+                        <p className="text-[11px] text-neutral-500">{u.name}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleToggleRestrict(u.id, u.username)}
+                      className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 text-neutral-900 dark:text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Unrestrict
+                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {restrictedSearch && (
+            <div className="space-y-1.5">
+              {filteredUsersForRestrict.map((u) => {
+                const isUserRestricted = restrictedUserIds.includes(u.id);
+                return (
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        referrerPolicy="no-referrer"
+                        className="w-10 h-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-neutral-950 dark:text-white">
+                          {u.username}
+                        </p>
+                        <p className="text-[11px] text-neutral-500">{u.name}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleToggleRestrict(u.id, u.username)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                        isUserRestricted
+                          ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-white'
+                          : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs'
+                      }`}
+                    >
+                      {isUserRestricted ? 'Unrestrict' : 'Restrict'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {restrictedUserIds.length === 0 && !restrictedSearch && (
+            <div className="py-10 text-center text-neutral-400 space-y-2">
+              <ShieldCheck size={36} className="mx-auto text-amber-500" />
+              <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                No restricted accounts
+              </p>
+              <p className="text-xs text-neutral-500">Search above to restrict an account.</p>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => setSubSection('main')}
+          className="w-full py-2.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 text-neutral-800 dark:text-neutral-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 no-scrollbar">
       {/* 1. Account Privacy Card */}
@@ -452,7 +615,24 @@ export const SettingsPrivacyView: React.FC = () => {
         <span className="text-xs font-bold text-emerald-500">Edit</span>
       </button>
 
-      {/* 3. Blocked Accounts button */}
+      {/* 3. Restricted Accounts button */}
+      <button
+        onClick={() => setSubSection('restricted')}
+        className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/60 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors text-left"
+      >
+        <div className="flex items-center gap-3">
+          <ShieldAlert size={20} className="text-amber-500" />
+          <div>
+            <p className="text-sm font-semibold text-neutral-950 dark:text-white">
+              Restricted Accounts
+            </p>
+            <p className="text-xs text-neutral-500">{restrictedUserIds.length} accounts</p>
+          </div>
+        </div>
+        <span className="text-xs font-bold text-neutral-400">View</span>
+      </button>
+
+      {/* 4. Blocked Accounts button */}
       <button
         onClick={() => setSubSection('blocked')}
         className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/60 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors text-left"

@@ -65,6 +65,26 @@ export class PostController {
       next(error);
     }
   }
+
+  async approveComment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { commentId } = req.params;
+      const result = await postService.approveComment(commentId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteComment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id: postId, commentId } = req.params;
+      const result = await postService.deleteComment(commentId, postId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const postController = new PostController();

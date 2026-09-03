@@ -7,6 +7,7 @@ export const CreateStorySchema = z.object({
   caption: z.string().max(500).optional().default(''),
   filter: z.string().optional().default('normal'),
   link: z.string().optional().default(''),
+  isCloseFriends: z.boolean().optional().default(false),
 });
 
 export const CreateHighlightSchema = z.object({

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Heart, Send, Sparkles, CornerDownRight, Search, ArrowUpDown } from 'lucide-react';
+import { X, Heart, Send, Sparkles, CornerDownRight, Search, ArrowUpDown, Trash2, Check, ShieldAlert } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Comment } from '../../types';
 
@@ -10,6 +10,8 @@ export const CommentsModal: React.FC = () => {
     setActiveCommentsPost,
     addComment,
     toggleLikeComment,
+    approveComment,
+    deleteComment,
     currentUser,
   } = useApp();
 
@@ -27,9 +29,21 @@ export const CommentsModal: React.FC = () => {
 
   const quickEmojis = ['❤️', '🔥', '👏', '😍', '✨', '🙌', '💯', '🥂'];
 
+  const isPostAuthor = currentUser?.id === activeCommentsPost?.author.id;
+
   const filteredComments = useMemo(() => {
     if (!activeCommentsPost) return [];
     let list = [...(activeCommentsPost.comments || [])];
+
+    // Filter out unapproved comments for non-authors
+    list = list.filter((c) => {
+      if (c.isApproved === false || c.isRestricted) {
+        // Only visible to the post author or the comment author
+        return isPostAuthor || (currentUser && c.userId === currentUser.id);
+      }
+      return true;
+    });
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -51,7 +65,7 @@ export const CommentsModal: React.FC = () => {
     }
 
     return list;
-  }, [activeCommentsPost, searchQuery, sortBy]);
+  }, [activeCommentsPost, searchQuery, sortBy, isPostAuthor, currentUser]);
 
   if (!activeCommentsPost) return null;
 
@@ -174,57 +188,106 @@ export const CommentsModal: React.FC = () => {
               </p>
             </div>
           ) : (
-            filteredComments.map((comment: Comment) => (
-              <motion.div
-                key={comment.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="flex items-start justify-between gap-3 group"
-              >
-                <div className="flex items-start gap-3 min-w-0">
-                  <img
-                    src={comment.userAvatar}
-                    alt={comment.username}
-                    referrerPolicy="no-referrer"
-                    className="w-8 h-8 rounded-full object-cover border border-neutral-100 dark:border-neutral-700 flex-shrink-0"
-                  />
-                  <div className="text-xs sm:text-sm leading-relaxed">
-                    <p className="text-neutral-800 dark:text-neutral-200">
-                      <span className="font-bold text-neutral-950 dark:text-white mr-1.5">
-                        {comment.username}
-                      </span>
-                      {comment.text}
-                    </p>
-                    <div className="flex items-center gap-3 text-[11px] text-neutral-400 dark:text-neutral-400 mt-1 font-medium">
-                      <span>{comment.timestamp}</span>
-                      {comment.likesCount > 0 && (
-                        <span>
-                          {comment.likesCount} {comment.likesCount === 1 ? 'like' : 'likes'}
+            filteredComments.map((comment: Comment) => {
+              const isCommentAuthor = currentUser?.id === comment.userId;
+              const isRestrictedUnapproved = comment.isApproved === false || comment.isRestricted;
+
+              return (
+                <motion.div
+                  key={comment.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  className={`flex items-start justify-between gap-3 group p-2 rounded-2xl transition-colors ${
+                    isRestrictedUnapproved
+                      ? 'bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50'
+                      : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <img
+                      src={comment.userAvatar}
+                      alt={comment.username}
+                      referrerPolicy="no-referrer"
+                      className="w-8 h-8 rounded-full object-cover border border-neutral-100 dark:border-neutral-700 flex-shrink-0"
+                    />
+                    <div className="text-xs sm:text-sm leading-relaxed flex-1 min-w-0">
+                      <p className="text-neutral-800 dark:text-neutral-200">
+                        <span className="font-bold text-neutral-950 dark:text-white mr-1.5">
+                          {comment.username}
                         </span>
+                        {comment.text}
+                      </p>
+
+                      {/* Restricted Comment Moderation Tag */}
+                      {isRestrictedUnapproved && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
+                            <ShieldAlert size={11} />
+                            {isPostAuthor
+                              ? 'Restricted account comment (Pending approval)'
+                              : 'Only visible to you and the post author'}
+                          </span>
+
+                          {isPostAuthor && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => approveComment(activeCommentsPost.id, comment.id)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors cursor-pointer"
+                              >
+                                <Check size={11} /> Approve
+                              </button>
+                              <button
+                                onClick={() => deleteComment(activeCommentsPost.id, comment.id)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 text-[11px] font-bold transition-colors cursor-pointer"
+                              >
+                                <Trash2 size={11} /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       )}
-                      <button
-                        onClick={() => handleReplyClick(comment.username)}
-                        className="hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer font-semibold"
-                      >
-                        Reply
-                      </button>
+
+                      <div className="flex items-center gap-3 text-[11px] text-neutral-400 dark:text-neutral-400 mt-1 font-medium">
+                        <span>{comment.timestamp}</span>
+                        {comment.likesCount > 0 && (
+                          <span>
+                            {comment.likesCount} {comment.likesCount === 1 ? 'like' : 'likes'}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleReplyClick(comment.username)}
+                          className="hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer font-semibold"
+                        >
+                          Reply
+                        </button>
+
+                        {(isPostAuthor || isCommentAuthor) && !isRestrictedUnapproved && (
+                          <button
+                            onClick={() => deleteComment(activeCommentsPost.id, comment.id)}
+                            className="text-neutral-400 hover:text-rose-500 cursor-pointer font-semibold"
+                            title="Delete comment"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <motion.button
-                  whileTap={{ scale: 0.75 }}
-                  onClick={() => toggleLikeComment(activeCommentsPost.id, comment.id)}
-                  className="p-1 text-neutral-400 hover:text-rose-500 transition-colors cursor-pointer flex-shrink-0"
-                >
-                  <Heart
-                    size={15}
-                    className={comment.isLiked ? 'text-rose-500 fill-rose-500' : ''}
-                  />
-                </motion.button>
-              </motion.div>
-            ))
+                  <motion.button
+                    whileTap={{ scale: 0.75 }}
+                    onClick={() => toggleLikeComment(activeCommentsPost.id, comment.id)}
+                    className="p-1 text-neutral-400 hover:text-rose-500 transition-colors cursor-pointer flex-shrink-0"
+                  >
+                    <Heart
+                      size={15}
+                      className={comment.isLiked ? 'text-rose-500 fill-rose-500' : ''}
+                    />
+                  </motion.button>
+                </motion.div>
+              );
+            })
           )}
         </div>
 

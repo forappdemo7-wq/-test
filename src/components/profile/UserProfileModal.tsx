@@ -14,6 +14,9 @@ import {
   ShieldAlert,
   Lock,
   Clock,
+  Star,
+  ShieldCheck,
+  MoreVertical,
 } from 'lucide-react';
 import { User, Post, Reel } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -42,16 +45,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
     blockedUserIds,
     blockUser,
     unblockUser,
+    closeFriendIds,
+    toggleCloseFriend,
+    restrictedUserIds,
+    restrictUser,
+    unrestrictUser,
   } = useApp();
 
   const [activeTab, setActiveTabLocal] = useState<'grid' | 'reels'>('grid');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isProcessingBlock, setIsProcessingBlock] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   if (!user) return null;
 
   const isCurrentUser = currentUser ? user.id === currentUser.id : false;
   const isBlocked = blockedUserIds.includes(user.id);
+  const isCloseFriend = closeFriendIds.includes(user.id);
+  const isRestricted = restrictedUserIds.includes(user.id);
   const isPrivateAccount = Boolean(user.isPrivate) && !isCurrentUser && !user.isFollowing;
   const userPosts = posts.filter((p) => p.author.id === user.id);
   const userReels = reels.filter((r) => r.author.id === user.id);
@@ -71,8 +82,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
     try {
       if (isBlocked) {
         await unblockUser(user.id);
+        toast.success(`Unblocked @${user.username}`);
       } else {
         await blockUser(user.id);
+        toast.success(`Blocked @${user.username}`);
         onClose();
       }
     } catch (err) {
@@ -80,6 +93,26 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
     } finally {
       setIsProcessingBlock(false);
     }
+  };
+
+  const handleToggleCloseFriend = async () => {
+    const next = await toggleCloseFriend(user.id);
+    if (next) {
+      toast.success(`Added @${user.username} to Close Friends`, { icon: '⭐' });
+    } else {
+      toast(`Removed @${user.username} from Close Friends`, { icon: '⭐' });
+    }
+  };
+
+  const handleToggleRestrict = async () => {
+    if (isRestricted) {
+      await unrestrictUser(user.id);
+      toast.success(`Unrestricted @${user.username}`);
+    } else {
+      await restrictUser(user.id);
+      toast.success(`Restricted @${user.username}. Their comments will require approval.`);
+    }
+    setShowOptionsMenu(false);
   };
 
   const handleShareProfile = async () => {
@@ -210,7 +243,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-1 relative">
             {!isCurrentUser ? (
               <>
                 <button
@@ -243,17 +276,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
                 >
                   <Send size={14} /> Message
                 </button>
+
+                {/* Close Friends Toggle */}
                 <button
-                  onClick={handleToggleBlock}
-                  disabled={isProcessingBlock}
+                  onClick={handleToggleCloseFriend}
                   className={`p-2 rounded-xl transition-colors cursor-pointer flex-shrink-0 ${
-                    isBlocked
-                      ? 'bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400'
-                      : 'bg-slate-100 dark:bg-neutral-800 hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-600 hover:text-red-600 dark:text-neutral-300'
+                    isCloseFriend
+                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
+                      : 'bg-slate-100 dark:bg-neutral-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-slate-600 hover:text-emerald-600 dark:text-neutral-300'
                   }`}
-                  title={isBlocked ? `Unblock @${user.username}` : `Block @${user.username}`}
+                  title={isCloseFriend ? 'Remove from Close Friends' : 'Add to Close Friends'}
                 >
-                  {isBlocked ? <UserCheck size={16} /> : <UserX size={16} />}
+                  <Star size={16} className={isCloseFriend ? 'fill-emerald-500 text-emerald-500' : ''} />
                 </button>
               </>
             ) : null}
@@ -265,7 +299,57 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
             >
               {copiedLink ? <Check size={16} className="text-emerald-500" /> : <LinkIcon size={16} />}
             </button>
+
+            {!isCurrentUser && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                  className="p-2 rounded-xl bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-300 transition-colors cursor-pointer flex-shrink-0"
+                  title="More options"
+                >
+                  <MoreVertical size={16} />
+                </button>
+
+                {showOptionsMenu && (
+                  <div className="absolute right-0 bottom-full mb-2 w-48 bg-white dark:bg-neutral-800 rounded-2xl border border-slate-200 dark:border-neutral-700 shadow-xl overflow-hidden py-1 z-30 animate-in fade-in zoom-in-95">
+                    <button
+                      onClick={handleToggleRestrict}
+                      className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-slate-800 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-700/60 flex items-center gap-2 cursor-pointer"
+                    >
+                      <ShieldAlert size={14} className={isRestricted ? 'text-amber-500' : 'text-slate-400'} />
+                      <span>{isRestricted ? 'Unrestrict' : 'Restrict'}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowOptionsMenu(false);
+                        handleToggleBlock();
+                      }}
+                      className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 cursor-pointer border-t border-slate-100 dark:border-neutral-700"
+                    >
+                      <UserX size={14} />
+                      <span>{isBlocked ? 'Unblock' : 'Block'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Badges row if account is restricted or in close friends */}
+          {(isCloseFriend || isRestricted) && !isCurrentUser && (
+            <div className="flex items-center gap-2 pt-0.5">
+              {isCloseFriend && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold border border-emerald-200 dark:border-emerald-800">
+                  <Star size={11} className="fill-emerald-500 text-emerald-500" /> Close Friends
+                </span>
+              )}
+              {isRestricted && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-[11px] font-bold border border-amber-200 dark:border-amber-800">
+                  <ShieldAlert size={11} /> Restricted
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Conditional rendering: If Account is Private & not followed, show Lock message */}
           {isPrivateAccount ? (

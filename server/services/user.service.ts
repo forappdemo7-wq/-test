@@ -220,6 +220,61 @@ export class UserService {
     return { success: true, isBlocked: false };
   }
 
+  async removeFollower(currentUserId: string, followerId: string) {
+    if (!currentUserId || !followerId) {
+      throw new BadRequestError('User ID and follower ID are required');
+    }
+    await userRepository.removeFollower(currentUserId, followerId);
+    const countRes = await query('SELECT COUNT(*)::int as count FROM follows WHERE following_id = $1', [
+      currentUserId,
+    ]);
+    return {
+      success: true,
+      followersCount: parseInt(countRes.rows[0]?.count || '0', 10),
+    };
+  }
+
+  async getCloseFriends(currentUserId: string) {
+    if (!currentUserId) throw new BadRequestError('User ID is required');
+    return userRepository.getCloseFriends(currentUserId);
+  }
+
+  async toggleCloseFriend(currentUserId: string, friendId: string) {
+    if (!currentUserId || !friendId) throw new BadRequestError('User IDs required');
+    const exists = await userRepository.isCloseFriend(currentUserId, friendId);
+    if (exists) {
+      await userRepository.removeCloseFriend(currentUserId, friendId);
+      return { success: true, isCloseFriend: false };
+    } else {
+      await userRepository.addCloseFriend(currentUserId, friendId);
+      return { success: true, isCloseFriend: true };
+    }
+  }
+
+  async setCloseFriends(currentUserId: string, friendIds: string[]) {
+    if (!currentUserId) throw new BadRequestError('User ID is required');
+    await userRepository.setCloseFriends(currentUserId, friendIds || []);
+    return { success: true };
+  }
+
+  async getRestrictedUsers(currentUserId: string) {
+    if (!currentUserId) throw new BadRequestError('User ID is required');
+    return userRepository.getRestrictedUsers(currentUserId);
+  }
+
+  async restrictUser(currentUserId: string, targetUserId: string) {
+    if (!currentUserId || !targetUserId) throw new BadRequestError('User IDs required');
+    if (currentUserId === targetUserId) throw new BadRequestError('Cannot restrict yourself');
+    await userRepository.restrictUser(currentUserId, targetUserId);
+    return { success: true, isRestricted: true };
+  }
+
+  async unrestrictUser(currentUserId: string, targetUserId: string) {
+    if (!currentUserId || !targetUserId) throw new BadRequestError('User IDs required');
+    await userRepository.unrestrictUser(currentUserId, targetUserId);
+    return { success: true, isRestricted: false };
+  }
+
   async search(term: string, limit: number = 20) {
     if (!term || !term.trim()) return [];
     return userRepository.searchUsers(term.trim(), limit);

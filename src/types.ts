@@ -17,6 +17,11 @@ export interface User {
   isFollowedBy?: boolean;
   isPrivate?: boolean;
   hasRequestedFollow?: boolean;
+  isCloseFriend?: boolean;
+  isRestricted?: boolean;
+  isBlocked?: boolean;
+  closeFriendIds?: string[];
+  restrictedUserIds?: string[];
   accountType?: 'public' | 'private';
   pronouns?: string;
   blockedUserIds?: string[];
@@ -122,6 +127,7 @@ export interface StoryItem {
   filter?: FilterType;
   seen?: boolean;
   isLiked?: boolean;
+  isCloseFriends?: boolean;
   viewsCount?: number;
   likesCount?: number;
   link?: string;
@@ -134,6 +140,7 @@ export interface StoryGroup {
   avatar: string;
   isVerified?: boolean;
   hasUnseen: boolean;
+  hasCloseFriends?: boolean;
   items: StoryItem[];
 }
 
@@ -152,6 +159,8 @@ export interface Comment {
   timestamp: string;
   likesCount: number;
   isLiked?: boolean;
+  isApproved?: boolean;
+  isRestricted?: boolean;
 }
 
 export interface Post {

@@ -4,6 +4,7 @@ import {
   User,
   Post,
   StoryGroup,
+  StoryItem,
   Reel,
   ReelWatchHistoryItem,
   ChatThread,
@@ -165,7 +166,7 @@ interface AppContextType {
   nextStoryGroup: () => void;
   prevStoryGroup: () => void;
   markStorySeen: (userId: string, storyId: string) => void;
-  addNewStory: (storyItem: { mediaUrl: string; caption?: string; filter?: any }) => Promise<void>;
+  addNewStory: (storyItem: { mediaUrl: string; caption?: string; filter?: any; isCloseFriends?: boolean }) => Promise<void>;
   toggleLikeStory: (storyId: string) => Promise<boolean>;
   deleteStory: (storyId: string) => Promise<void>;
 
@@ -247,6 +248,22 @@ interface AppContextType {
   unblockUser: (userId: string) => Promise<void>;
   isUserBlocked: (userId: string) => boolean;
 
+  // Close Friends
+  closeFriendIds: string[];
+  toggleCloseFriend: (userId: string) => Promise<boolean>;
+  setCloseFriends: (userIds: string[]) => Promise<void>;
+  isCloseFriend: (userId: string) => boolean;
+
+  // Restricted Users
+  restrictedUserIds: string[];
+  restrictUser: (userId: string) => Promise<void>;
+  unrestrictUser: (userId: string) => Promise<void>;
+  isUserRestricted: (userId: string) => boolean;
+
+  // Comment Moderation
+  approveComment: (postId: string, commentId: string) => Promise<void>;
+  deleteComment: (postId: string, commentId: string) => Promise<void>;
+
   // Notifications
   notifications: AppNotification[];
   markNotificationAsRead: (id: string) => void;
@@ -281,6 +298,7 @@ interface AppContextType {
   setSelectedUserProfile: (user: User | null) => void;
   openFollowersModal: (userId: string) => Promise<void>;
   openFollowingModal: (userId: string) => Promise<void>;
+  removeFollower: (followerId: string) => Promise<void>;
 
   // Explore selection
   openExplorePost: (postData: any) => void;
@@ -359,6 +377,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const savedBlocked = localStorage.getItem(`instavibe_blocked_users_${u.id}`);
           if (savedBlocked) return JSON.parse(savedBlocked);
           return u.blockedUserIds || [];
+        }
+      }
+    } catch {}
+    return [];
+  });
+
+  const [closeFriendIds, setCloseFriendIds] = useState<string[]>(() => {
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const saved = localStorage.getItem(`instavibe_close_friends_${u.id}`);
+          if (saved) return JSON.parse(saved);
+        }
+      }
+    } catch {}
+    return [];
+  });
+
+  const [restrictedUserIds, setRestrictedUserIds] = useState<string[]>(() => {
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const saved = localStorage.getItem(`instavibe_restricted_users_${u.id}`);
+          if (saved) return JSON.parse(saved);
         }
       }
     } catch {}
@@ -670,6 +716,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const reqData = await safeJson(reqRes);
             if (Array.isArray(reqData)) {
               setPendingFollowRequests(reqData);
+            }
+          }
+
+          // Fetch close friends list
+          const cfRes = await fetch(`/api/users/${currentUser.id}/close-friends?currentUserId=${currentUser.id}`);
+          if (cfRes.ok) {
+            const cfData = await safeJson(cfRes);
+            if (Array.isArray(cfData)) {
+              const ids = cfData.map((u: any) => u.id || u);
+              setCloseFriendIds(ids);
+              localStorage.setItem(`instavibe_close_friends_${currentUser.id}`, JSON.stringify(ids));
+            }
+          }
+
+          // Fetch restricted users list
+          const ruRes = await fetch(`/api/users/${currentUser.id}/restricted?currentUserId=${currentUser.id}`);
+          if (ruRes.ok) {
+            const ruData = await safeJson(ruRes);
+            if (Array.isArray(ruData)) {
+              const ids = ruData.map((u: any) => u.id || u);
+              setRestrictedUserIds(ids);
+              localStorage.setItem(`instavibe_restricted_users_${currentUser.id}`, JSON.stringify(ids));
             }
           }
         } catch (e) {
@@ -1664,15 +1732,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addNewStory = async (storyItem: { mediaUrl: string; caption?: string; filter?: any }) => {
+  const addNewStory = async (storyItem: {
+    mediaUrl: string;
+    caption?: string;
+    filter?: any;
+    isCloseFriends?: boolean;
+  }) => {
     if (!currentUser) return;
-    const newItem = {
+    const isCF = Boolean(storyItem.isCloseFriends);
+    const newItem: StoryItem = {
       id: 'story_' + Date.now(),
       mediaUrl: storyItem.mediaUrl,
       mediaType: 'image' as const,
       timestamp: 'Just now',
       caption: storyItem.caption,
       filter: storyItem.filter,
+      isCloseFriends: isCF,
       seen: false,
     };
 
@@ -1684,6 +1759,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...updated[userGroupIndex],
           items: [newItem, ...updated[userGroupIndex].items],
           hasUnseen: false,
+          hasCloseFriends: isCF || updated[userGroupIndex].hasCloseFriends,
         };
         return updated;
       } else {
@@ -1694,6 +1770,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           avatar: currentUser.avatar,
           isVerified: currentUser.isVerified,
           hasUnseen: false,
+          hasCloseFriends: isCF,
           items: [newItem],
         };
         return [newGroup, ...prev];
@@ -1711,6 +1788,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           mediaUrl: storyItem.mediaUrl,
           caption: storyItem.caption,
           filter: storyItem.filter,
+          isCloseFriends: isCF,
         }),
       });
       if (res.ok) {
@@ -2412,6 +2490,206 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return blockedUserIds.includes(userId);
   };
 
+  const removeFollower = async (followerId: string) => {
+    if (!followerId || !currentUser?.id) return;
+    setUserListModal((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        users: prev.users.filter((u) => u.id !== followerId),
+      };
+    });
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      const updated = {
+        ...prev,
+        followersCount: Math.max(0, (prev.followersCount || 1) - 1),
+      };
+      try {
+        localStorage.setItem('instavibe_user', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    try {
+      await fetch(`/api/users/${currentUser.id}/followers/${followerId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUserId: currentUser.id }),
+      });
+      celebrateAction();
+    } catch (e) {
+      console.error('Error removing follower:', e);
+    }
+  };
+
+  const toggleCloseFriend = async (friendId: string): Promise<boolean> => {
+    if (!friendId || !currentUser?.id) return false;
+    let nextState = false;
+    setCloseFriendIds((prev) => {
+      const isFriend = prev.includes(friendId);
+      nextState = !isFriend;
+      const next = isFriend ? prev.filter((id) => id !== friendId) : [...prev, friendId];
+      try {
+        localStorage.setItem(`instavibe_close_friends_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    try {
+      await fetch(`/api/users/${currentUser.id}/close-friends/${friendId}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUserId: currentUser.id }),
+      });
+    } catch (e) {
+      console.error('Error toggling close friend on server:', e);
+    }
+    return nextState;
+  };
+
+  const setCloseFriends = async (friendIds: string[]) => {
+    if (!currentUser?.id) return;
+    setCloseFriendIds(friendIds);
+    try {
+      localStorage.setItem(`instavibe_close_friends_${currentUser.id}`, JSON.stringify(friendIds));
+      await fetch(`/api/users/${currentUser.id}/close-friends`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUserId: currentUser.id, friendIds }),
+      });
+    } catch (e) {
+      console.error('Error saving close friends list:', e);
+    }
+  };
+
+  const isCloseFriend = (userId: string) => {
+    return closeFriendIds.includes(userId);
+  };
+
+  const restrictUser = async (targetUserId: string) => {
+    if (!targetUserId || !currentUser?.id) return;
+    setRestrictedUserIds((prev) => {
+      if (prev.includes(targetUserId)) return prev;
+      const next = [...prev, targetUserId];
+      try {
+        localStorage.setItem(`instavibe_restricted_users_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.participant.id === targetUserId ? { ...t, category: 'requests' } : t
+      )
+    );
+
+    try {
+      await fetch(`/api/users/${targetUserId}/restrict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUserId: currentUser.id }),
+      });
+    } catch (e) {
+      console.error('Error restricting user:', e);
+    }
+  };
+
+  const unrestrictUser = async (targetUserId: string) => {
+    if (!targetUserId || !currentUser?.id) return;
+    setRestrictedUserIds((prev) => {
+      const next = prev.filter((id) => id !== targetUserId);
+      try {
+        localStorage.setItem(`instavibe_restricted_users_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    try {
+      await fetch(`/api/users/${targetUserId}/unrestrict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUserId: currentUser.id }),
+      });
+    } catch (e) {
+      console.error('Error unrestricting user:', e);
+    }
+  };
+
+  const isUserRestricted = (userId: string) => {
+    return restrictedUserIds.includes(userId);
+  };
+
+  const approveComment = async (postId: string, commentId: string) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            comments: p.comments?.map((c) =>
+              c.id === commentId ? { ...c, isApproved: true, isRestricted: false } : c
+            ),
+          };
+        }
+        return p;
+      })
+    );
+
+    if (selectedPostForDetail?.id === postId) {
+      setSelectedPostForDetail((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          comments: prev.comments?.map((c) =>
+            c.id === commentId ? { ...c, isApproved: true, isRestricted: false } : c
+          ),
+        };
+      });
+    }
+
+    try {
+      await fetch(`/api/posts/${postId}/comments/${commentId}/approve`, {
+        method: 'POST',
+      });
+    } catch (e) {
+      console.error('Error approving comment:', e);
+    }
+  };
+
+  const deleteComment = async (postId: string, commentId: string) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            commentsCount: Math.max(0, (p.commentsCount || 1) - 1),
+            comments: p.comments?.filter((c) => c.id !== commentId),
+          };
+        }
+        return p;
+      })
+    );
+
+    if (selectedPostForDetail?.id === postId) {
+      setSelectedPostForDetail((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          commentsCount: Math.max(0, (prev.commentsCount || 1) - 1),
+          comments: prev.comments?.filter((c) => c.id !== commentId),
+        };
+      });
+    }
+
+    try {
+      await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+        method: 'DELETE',
+      });
+    } catch (e) {
+      console.error('Error deleting comment:', e);
+    }
+  };
+
   // Notifications
   const markNotificationAsRead = async (id: string) => {
     if (!currentUser?.id) return;
@@ -2981,6 +3259,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         blockUser,
         unblockUser,
         isUserBlocked,
+        closeFriendIds,
+        toggleCloseFriend,
+        setCloseFriends,
+        isCloseFriend,
+        restrictedUserIds,
+        restrictUser,
+        unrestrictUser,
+        isUserRestricted,
+        approveComment,
+        deleteComment,
         notifications: visibleNotifications,
         markNotificationAsRead,
         markAllNotificationsRead,
@@ -3008,6 +3296,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedUserProfile,
         openFollowersModal,
         openFollowingModal,
+        removeFollower,
         openExplorePost,
         toggleFollowUser,
         pendingFollowRequests,

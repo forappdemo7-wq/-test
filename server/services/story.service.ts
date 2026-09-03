@@ -18,13 +18,18 @@ export class StoryService {
           avatar: s.avatar,
           isVerified: s.is_verified,
           hasUnseen: false,
+          hasCloseFriends: false,
           items: [],
         };
       }
 
       const isSeen = s.isSeen || false;
+      const isCloseFriends = Boolean(s.is_close_friends);
       if (!isSeen && s.user_id !== currentUserId) {
         groupedMap[s.user_id].hasUnseen = true;
+      }
+      if (isCloseFriends) {
+        groupedMap[s.user_id].hasCloseFriends = true;
       }
 
       let timeAgo = 'Just now';
@@ -47,6 +52,7 @@ export class StoryService {
         filter: s.filter || 'normal',
         seen: isSeen,
         isLiked: Boolean(s.isLiked),
+        isCloseFriends,
         viewsCount: s.viewsCount || 0,
         likesCount: s.likesCount || 0,
         link: s.link || '',
@@ -63,6 +69,7 @@ export class StoryService {
     caption?: string;
     filter?: string;
     link?: string;
+    isCloseFriends?: boolean;
   }) {
     let finalMediaUrl = data.mediaUrl;
     if (data.mediaUrl && data.mediaUrl.startsWith('data:image')) {
@@ -79,6 +86,7 @@ export class StoryService {
       caption: data.caption || '',
       filter: data.filter || 'normal',
       link: data.link || '',
+      isCloseFriends: Boolean(data.isCloseFriends),
     });
 
     return {

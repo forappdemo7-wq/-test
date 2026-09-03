@@ -96,7 +96,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy",
         EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $2 AND target_id = u.id) as "hasRequestedFollow",
-        EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $2 AND blocked_id = u.id) as "isBlocked"
+        EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $2 AND blocked_id = u.id) as "isBlocked",
+        EXISTS(SELECT 1 FROM close_friends WHERE user_id = $2 AND friend_id = u.id) as "isCloseFriend",
+        EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $2 AND restricted_id = u.id) as "isRestricted"
       FROM users u
       WHERE u.id = $1`,
       [targetUserId, currentUserId || 'none']
@@ -200,7 +202,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = u.id) as "isFollowing",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $1) as "isFollowedBy",
         EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $1 AND target_id = u.id) as "hasRequestedFollow",
-        EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $1 AND blocked_id = u.id) as "isBlocked"
+        EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $1 AND blocked_id = u.id) as "isBlocked",
+        EXISTS(SELECT 1 FROM close_friends WHERE user_id = $1 AND friend_id = u.id) as "isCloseFriend",
+        EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $1 AND restricted_id = u.id) as "isRestricted"
       FROM users u
       ORDER BY u.created_at ASC
       LIMIT $2`,
@@ -213,8 +217,11 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const res = await query(
       `SELECT 
         u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified",
+        u.is_private as "isPrivate",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
-        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy"
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy",
+        EXISTS(SELECT 1 FROM close_friends WHERE user_id = $2 AND friend_id = u.id) as "isCloseFriend",
+        EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $2 AND restricted_id = u.id) as "isRestricted"
       FROM follows f
       JOIN users u ON u.id = f.follower_id
       WHERE f.following_id = $1`,
@@ -227,8 +234,11 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const res = await query(
       `SELECT 
         u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified",
+        u.is_private as "isPrivate",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
-        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy"
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy",
+        EXISTS(SELECT 1 FROM close_friends WHERE user_id = $2 AND friend_id = u.id) as "isCloseFriend",
+        EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $2 AND restricted_id = u.id) as "isRestricted"
       FROM follows f
       JOIN users u ON u.id = f.following_id
       WHERE f.follower_id = $1`,
@@ -252,6 +262,93 @@ export class UserRepository extends BaseRepository<UserEntity> {
     await query(
       `DELETE FROM blocked_users WHERE blocker_id = $1 AND blocked_id = $2`,
       [userId, blockedUserId]
+    );
+  }
+
+  async removeFollower(followingId: string, followerId: string): Promise<void> {
+    await query('DELETE FROM follows WHERE follower_id = $1 AND following_id = $2', [
+      followerId,
+      followingId,
+    ]);
+  }
+
+  async getCloseFriends(userId: string): Promise<any[]> {
+    const res = await query(
+      `SELECT u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified"
+       FROM close_friends cf
+       JOIN users u ON u.id = cf.friend_id
+       WHERE cf.user_id = $1
+       ORDER BY cf.created_at DESC`,
+      [userId]
+    );
+    return res.rows;
+  }
+
+  async isCloseFriend(userId: string, friendId: string): Promise<boolean> {
+    const res = await query(
+      'SELECT 1 FROM close_friends WHERE user_id = $1 AND friend_id = $2',
+      [userId, friendId]
+    );
+    return res.rows.length > 0;
+  }
+
+  async addCloseFriend(userId: string, friendId: string): Promise<void> {
+    await query(
+      'INSERT INTO close_friends (user_id, friend_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [userId, friendId]
+    );
+  }
+
+  async removeCloseFriend(userId: string, friendId: string): Promise<void> {
+    await query(
+      'DELETE FROM close_friends WHERE user_id = $1 AND friend_id = $2',
+      [userId, friendId]
+    );
+  }
+
+  async setCloseFriends(userId: string, friendIds: string[]): Promise<void> {
+    await query('DELETE FROM close_friends WHERE user_id = $1', [userId]);
+    for (const fid of friendIds) {
+      if (fid && fid !== userId) {
+        await query(
+          'INSERT INTO close_friends (user_id, friend_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [userId, fid]
+        );
+      }
+    }
+  }
+
+  async getRestrictedUsers(userId: string): Promise<any[]> {
+    const res = await query(
+      `SELECT u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified"
+       FROM restricted_users ru
+       JOIN users u ON u.id = ru.restricted_id
+       WHERE ru.user_id = $1
+       ORDER BY ru.created_at DESC`,
+      [userId]
+    );
+    return res.rows;
+  }
+
+  async isRestricted(userId: string, targetId: string): Promise<boolean> {
+    const res = await query(
+      'SELECT 1 FROM restricted_users WHERE user_id = $1 AND restricted_id = $2',
+      [userId, targetId]
+    );
+    return res.rows.length > 0;
+  }
+
+  async restrictUser(userId: string, targetId: string): Promise<void> {
+    await query(
+      'INSERT INTO restricted_users (user_id, restricted_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [userId, targetId]
+    );
+  }
+
+  async unrestrictUser(userId: string, targetId: string): Promise<void> {
+    await query(
+      'DELETE FROM restricted_users WHERE user_id = $1 AND restricted_id = $2',
+      [userId, targetId]
     );
   }
 

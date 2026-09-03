@@ -23,6 +23,11 @@ export class StoryRepository extends BaseRepository<any> {
         OR s.user_id = $1
         OR EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = s.user_id)
       )
+      AND (
+        COALESCE(s.is_close_friends, false) = false
+        OR s.user_id = $1
+        OR EXISTS(SELECT 1 FROM close_friends WHERE user_id = s.user_id AND friend_id = $1)
+      )
       ORDER BY s.created_at DESC`,
       [currentUserId || 'none']
     );
@@ -37,11 +42,21 @@ export class StoryRepository extends BaseRepository<any> {
     caption: string;
     filter: string;
     link: string;
+    isCloseFriends?: boolean;
   }): Promise<void> {
     await query(
-      `INSERT INTO stories (id, user_id, media_url, media_type, caption, filter, link)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [story.id, story.userId, story.mediaUrl, story.mediaType, story.caption, story.filter, story.link]
+      `INSERT INTO stories (id, user_id, media_url, media_type, caption, filter, link, is_close_friends)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        story.id,
+        story.userId,
+        story.mediaUrl,
+        story.mediaType,
+        story.caption,
+        story.filter,
+        story.link,
+        Boolean(story.isCloseFriends),
+      ]
     );
   }
 
