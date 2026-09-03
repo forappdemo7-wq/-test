@@ -298,7 +298,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem('instavibe_user');
       if (saved) {
         const u = JSON.parse(saved);
-        if (u && u.id && u.id !== 'guest_user') return u;
+        if (u && u.id && u.id !== 'guest_user') {
+          if (u.username?.toLowerCase().includes('demo')) {
+            localStorage.removeItem('instavibe_user');
+            return null;
+          }
+          return u;
+        }
       }
     } catch {
       // ignore
@@ -309,22 +315,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const isAuthenticated = Boolean(currentUser && currentUser.id && currentUser.id !== 'guest_user');
 
   const [savedAccounts, setSavedAccounts] = useState<User[]>(() => {
+    let loadedAccounts: User[] = [];
     try {
       const saved = localStorage.getItem('instavibe_saved_accounts');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed.filter((u) => u && u.id && u.id !== 'guest_user');
+        if (Array.isArray(parsed)) {
+          loadedAccounts = parsed.filter(
+            (u) => u && u.id && u.id !== 'guest_user' && !u.username?.toLowerCase().includes('demo')
+          );
+        }
       }
     } catch {}
-    const initialSaved: User[] = [];
+    
+    // Add current user if single key exists but array doesn't have it
     try {
       const single = localStorage.getItem('instavibe_user');
       if (single) {
         const u = JSON.parse(single);
-        if (u && u.id && u.id !== 'guest_user') initialSaved.push(u);
+        if (
+          u &&
+          u.id &&
+          u.id !== 'guest_user' &&
+          !u.username?.toLowerCase().includes('demo') &&
+          !loadedAccounts.some((a) => a.id === u.id)
+        ) {
+          loadedAccounts.push(u);
+        }
       }
     } catch {}
-    return initialSaved;
+    
+    // Auto-update to remove demo users from storage
+    if (loadedAccounts.length >= 0) {
+      localStorage.setItem('instavibe_saved_accounts', JSON.stringify(loadedAccounts));
+    }
+    
+    return loadedAccounts;
   });
 
   const [availableProfiles, setAvailableProfiles] = useState<User[]>([]);

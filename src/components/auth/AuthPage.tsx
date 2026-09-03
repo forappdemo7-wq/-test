@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Smartphone,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -24,9 +25,14 @@ export const AuthPage: React.FC = () => {
     verify2FALogin,
     requestPasswordReset,
     verifyPasswordReset,
+    savedAccounts,
+    switchProfile,
+    removeSavedAccount,
   } = useApp();
 
-  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot_password' | '2fa_challenge'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot_password' | '2fa_challenge' | 'saved_accounts'>(
+    savedAccounts?.filter((u) => u && u.id && u.id !== 'guest_user').length > 0 ? 'saved_accounts' : 'signin'
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -391,6 +397,58 @@ export const AuthPage: React.FC = () => {
                 >
                   <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span className="leading-tight">{successMessage}</span>
+                </div>
+              )}
+
+              {/* 0. SAVED ACCOUNTS */}
+              {mode === 'saved_accounts' && (
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="flex flex-col items-center">
+                    {savedAccounts
+                      .filter((u) => u && u.id && u.id !== 'guest_user')
+                      .map((user) => (
+                        <div
+                          key={user.id}
+                          className="flex items-center justify-between w-full p-3 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors mb-2 cursor-pointer"
+                          onClick={() => switchProfile(user)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={user.avatar || 'https://via.placeholder.com/150'}
+                              alt={user.name}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                            <div className="text-left">
+                              <p className="font-semibold text-sm text-neutral-900 dark:text-white">
+                                @{user.username}
+                              </p>
+                              <p className="text-xs text-neutral-500">Log in</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeSavedAccount(user.id);
+                              if (savedAccounts.filter((u) => u.id !== user.id && u.id !== 'guest_user').length === 0) {
+                                setMode('signin');
+                              }
+                            }}
+                            className="p-2 text-neutral-400 hover:text-red-500 transition-colors"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setMode('signin')}
+                    className="text-blue-500 font-semibold text-sm text-center py-2"
+                  >
+                    Log into another account
+                  </button>
                 </div>
               )}
 
