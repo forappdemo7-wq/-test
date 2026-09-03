@@ -110,6 +110,8 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
   const isBlocked = blockedUserIds.includes(thread.participant.id);
   const isOnline = isUserOnline(thread.participant.id);
   const isPinned = pinnedThreadIds.includes(thread.id) || !!thread.isPinned;
+  
+  const canMessage = !isBlocked && thread.participant.isFollowing && thread.participant.isFollowedBy;
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
@@ -758,6 +760,10 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
               >
                 Unblock
               </button>
+            </div>
+          ) : !canMessage ? (
+            <div className="flex items-center justify-center py-3 px-4 bg-neutral-100 dark:bg-neutral-800/80 rounded-2xl text-xs sm:text-sm font-medium text-neutral-500 dark:text-neutral-400">
+              You must follow each other to send messages.
             </div>
           ) : (
             <form onSubmit={handleSend} className="flex items-center gap-2">

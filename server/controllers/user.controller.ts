@@ -89,6 +89,38 @@ export class UserController {
     }
   }
 
+  async getPendingRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const currentUserId = (req.query.currentUserId as string) || req.user?.id;
+      const requests = await userService.getPendingRequests(currentUserId);
+      res.json(requests);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async acceptRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requesterId = req.params.requesterId;
+      const currentUserId = req.body.currentUserId || req.user?.id;
+      const result = await userService.acceptFollowRequest(currentUserId, requesterId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async declineRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requesterId = req.params.requesterId;
+      const currentUserId = req.body.currentUserId || req.user?.id;
+      const result = await userService.declineFollowRequest(currentUserId, requesterId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async search(req: Request, res: Response, next: NextFunction) {
     try {
       const term = (req.query.q as string) || (req.query.query as string) || '';

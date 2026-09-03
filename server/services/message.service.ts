@@ -1,4 +1,5 @@
 import { messageRepository } from '../repositories/message.repository';
+import { userRepository } from '../repositories/user.repository';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { BadRequestError } from '../core/errors/app-error';
 
@@ -62,6 +63,13 @@ export class MessageService {
   }) {
     if (!data.receiverId || !data.text) {
       throw new BadRequestError('Receiver ID and message text are required');
+    }
+
+    const isFollowingThem = await userRepository.isFollowing(data.senderId, data.receiverId);
+    const areTheyFollowingMe = await userRepository.isFollowing(data.receiverId, data.senderId);
+
+    if (!isFollowingThem || !areTheyFollowingMe) {
+      throw new BadRequestError('You can only send messages to users if you follow each other (mutual follow).');
     }
 
     let finalMedia = data.mediaUrl;

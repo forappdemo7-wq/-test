@@ -10,7 +10,7 @@ export interface JobPayloadMap {
   [JobType.DISPATCH_NOTIFICATION]: {
     recipientId: string;
     senderId: string;
-    type: 'like' | 'comment' | 'follow' | 'story_like' | 'mention' | 'tag';
+    type: 'like' | 'comment' | 'follow' | 'follow_request' | 'story_like' | 'mention' | 'tag' | 'direct_message';
     targetMediaUrl?: string;
     postId?: string;
     text: string;

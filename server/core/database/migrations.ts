@@ -45,6 +45,7 @@ export async function runDatabaseMigrations(): Promise<void> {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS passkey_credential_id TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS passkey_public_key TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT false;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
   `);
@@ -83,6 +84,13 @@ export async function runDatabaseMigrations(): Promise<void> {
       following_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (follower_id, following_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS follow_requests (
+      requester_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      target_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (requester_id, target_id)
     );
   `);
 

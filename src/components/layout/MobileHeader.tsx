@@ -48,7 +48,9 @@ export const MobileHeader: React.FC = () => {
               onClick={() => setIsProfileDropdownOpen((prev) => !prev)}
               className="flex items-center gap-1.5 text-left group focus:outline-none cursor-pointer py-0.5 active:scale-98 transition-transform"
             >
-              <Lock size={14} className="text-neutral-700 dark:text-neutral-300 stroke-[2.5]" />
+              {currentUser?.isPrivate && (
+                <Lock size={14} className="text-neutral-700 dark:text-neutral-300 stroke-[2.5]" />
+              )}
               <span className="text-lg font-bold tracking-tight text-neutral-950 dark:text-white">
                 {currentUser?.username || 'Profile'}
               </span>
@@ -64,25 +66,15 @@ export const MobileHeader: React.FC = () => {
             {isProfileDropdownOpen && (
               <div className="absolute left-0 mt-2 w-72 p-2.5 bg-white dark:bg-neutral-900 rounded-3xl shadow-soft-lg border border-neutral-200/80 dark:border-neutral-800 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-1.5 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Switch Account
+                  Active Account
                 </div>
                 <div className="space-y-1 max-h-48 overflow-y-auto no-scrollbar">
                   {savedAccounts
-                    .filter((p) => p && p.id && p.id !== 'guest_user')
+                    .filter((p) => p && p.id && p.id !== 'guest_user' && (!currentUser || p.id === currentUser.id))
                     .map((p) => (
-                      <button
+                      <div
                         key={p.id}
-                        onClick={() => {
-                          if (currentUser?.id !== p.id) {
-                            switchProfile(p);
-                          }
-                          setIsProfileDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-2xl text-left transition-all duration-150 cursor-pointer ${
-                          currentUser?.id === p.id
-                            ? 'bg-neutral-100 dark:bg-neutral-800/80 font-bold text-neutral-950 dark:text-white shadow-soft-xs'
-                            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200'
-                        }`}
+                        className="w-full flex items-center justify-between p-2.5 rounded-2xl text-left bg-neutral-100 dark:bg-neutral-800/80 font-bold text-neutral-950 dark:text-white shadow-soft-xs"
                       >
                         <div className="flex items-center gap-3">
                           <img
@@ -96,18 +88,15 @@ export const MobileHeader: React.FC = () => {
                             <p className="text-xs text-neutral-500 truncate">{p.name}</p>
                           </div>
                         </div>
-                        {currentUser?.id === p.id && <Check size={16} className="text-blue-500 stroke-[2.5]" />}
-                      </button>
+                        <Check size={16} className="text-blue-500 stroke-[2.5]" />
+                      </div>
                     ))}
-
-                  {savedAccounts.filter((p) => p && p.id && p.id !== 'guest_user').length <= 1 && (
-                    <div className="px-3 py-2 text-[11px] text-neutral-500 dark:text-neutral-400">
-                      No other accounts saved on this device.
-                    </div>
-                  )}
                 </div>
 
                 <div className="pt-2 mt-1.5 border-t border-neutral-100 dark:border-neutral-800/80 space-y-1">
+                  <p className="px-3 py-1 text-[11px] text-neutral-500 dark:text-neutral-400">
+                    Only your authenticated profile data is accessible. Other accounts are filtered out.
+                  </p>
                   <button
                     onClick={() => {
                       setIsProfileDropdownOpen(false);
@@ -116,17 +105,7 @@ export const MobileHeader: React.FC = () => {
                     className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                   >
                     <LogIn size={15} className="text-blue-500" />
-                    <span>Log into Existing Account</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsProfileDropdownOpen(false);
-                      openAuthModal('signup');
-                    }}
-                    className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
-                  >
-                    <UserPlus size={15} />
-                    <span>Create New Account</span>
+                    <span>Log into another account</span>
                   </button>
                 </div>
               </div>

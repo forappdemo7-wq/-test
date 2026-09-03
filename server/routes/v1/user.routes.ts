@@ -10,6 +10,9 @@ const router = Router();
 
 router.get('/', optionalAuth, userController.getAllUsers.bind(userController));
 router.get('/search', validate({ query: SearchQuerySchema }), userController.search.bind(userController));
+router.get('/requests/pending', optionalAuth, userController.getPendingRequests.bind(userController));
+router.post('/requests/:requesterId/accept', optionalAuth, userController.acceptRequest.bind(userController));
+router.post('/requests/:requesterId/decline', optionalAuth, userController.declineRequest.bind(userController));
 
 router.get(
   '/:id',

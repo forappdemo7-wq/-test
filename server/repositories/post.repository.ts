@@ -27,6 +27,7 @@ export class PostRepository extends BaseRepository<PostEntity> {
         u.avatar as author_avatar,
         u.bio as author_bio,
         u.is_verified as author_is_verified,
+        COALESCE(u.is_private, false) as author_is_private,
         (SELECT COUNT(*)::int FROM posts WHERE user_id = u.id) as author_posts_count,
         (SELECT COUNT(*)::int FROM follows WHERE following_id = u.id) as author_followers_count,
         (SELECT COUNT(*)::int FROM follows WHERE follower_id = u.id) as author_following_count,
@@ -34,9 +35,15 @@ export class PostRepository extends BaseRepository<PostEntity> {
         (SELECT COUNT(*)::int FROM comments WHERE post_id = p.id) as comments_count,
         EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND user_id = $1) as "isLiked",
         EXISTS(SELECT 1 FROM saved_posts WHERE post_id = p.id AND user_id = $1) as "isSaved",
-        EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = p.user_id) as "author_is_following"
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = p.user_id) as "author_is_following",
+        EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $1 AND target_id = p.user_id) as "author_has_requested_follow"
       FROM posts p
       JOIN users u ON p.user_id = u.id
+      WHERE (
+        COALESCE(u.is_private, false) = false
+        OR p.user_id = $1
+        OR EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = p.user_id)
+      )
       ORDER BY p.created_at DESC
       LIMIT $2 OFFSET $3`,
       [currentUserId || 'none', limit, offset]

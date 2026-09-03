@@ -7,6 +7,7 @@ import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { InAppMessageToast } from './components/messages/InAppMessageToast';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AuthPage } from './components/auth/AuthPage';
+import { Toaster } from 'react-hot-toast';
 import {
   FeedListSkeleton,
   ExploreSkeleton,
@@ -204,6 +205,16 @@ export default function App() {
     <ErrorBoundary>
       <AppProvider>
         <MainLayout />
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              background: '#333',
+              color: '#fff',
+              borderRadius: '16px',
+            }
+          }}
+        />
       </AppProvider>
     </ErrorBoundary>
   );

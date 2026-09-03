@@ -4,7 +4,6 @@ import {
   Grid,
   Bookmark,
   Clapperboard,
-  UserCheck,
   Link,
   Plus,
   Heart,
@@ -26,7 +25,6 @@ export const ProfileView: React.FC = () => {
     posts,
     savedPostIds,
     reels,
-    availableProfiles,
     setIsEditProfileOpen,
     setUserListModal,
     setSelectedPostForDetail,
@@ -268,19 +266,6 @@ export const ProfileView: React.FC = () => {
             title="Stories Archive"
           >
             <Archive size={18} />
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() =>
-              setUserListModal({
-                title: 'Discover People',
-                users: availableProfiles.filter((u) => u.id !== currentUser.id),
-              })
-            }
-            className="p-2 rounded-2xl bg-neutral-100 dark:bg-neutral-800/80 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 transition-colors cursor-pointer flex-shrink-0 shadow-soft-xs"
-            title="Discover People"
-          >
-            <UserCheck size={18} />
           </motion.button>
         </div>
 

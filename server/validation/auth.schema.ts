@@ -41,6 +41,7 @@ export const UpdateProfileSchema = z.object({
   avatar: z.string().optional(),
   website: z.string().optional(),
   category: z.string().optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 export const FollowToggleSchema = z.object({

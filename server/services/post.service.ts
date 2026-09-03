@@ -38,6 +38,8 @@ export class PostService {
         bio: p.author_bio || '',
         isVerified: p.author_is_verified,
         isFollowing: p.author_is_following,
+        isPrivate: Boolean(p.author_is_private),
+        hasRequestedFollow: Boolean(p.author_has_requested_follow),
         followersCount: parseInt(p.author_followers_count || '0', 10),
         followingCount: parseInt(p.author_following_count || '0', 10),
         postsCount: parseInt(p.author_posts_count || '0', 10),

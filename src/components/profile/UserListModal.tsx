@@ -63,10 +63,12 @@ export const UserListModal: React.FC = () => {
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     u.isFollowing
                       ? 'bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700'
+                      : u.hasRequestedFollow
+                      ? 'bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-300 dark:border-neutral-700'
                       : 'bg-blue-500 hover:bg-blue-600 text-white shadow-xs'
                   }`}
                 >
-                  {u.isFollowing ? 'Following' : 'Follow'}
+                  {u.isFollowing ? 'Following' : u.hasRequestedFollow ? 'Requested' : 'Follow'}
                 </button>
               )}
             </div>

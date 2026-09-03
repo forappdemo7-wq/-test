@@ -20,7 +20,9 @@ export const NewChatModal: React.FC<NewChatModalProps> = ({
 
   if (!isOpen) return null;
 
-  const selectableUsers = availableProfiles.filter((u) => u.id !== currentUser?.id);
+  const selectableUsers = availableProfiles.filter(
+    (u) => u.id !== currentUser?.id && u.isFollowing && u.isFollowedBy
+  );
 
   const filteredUsers = selectableUsers.filter(
     (u) =>

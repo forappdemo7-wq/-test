@@ -13,30 +13,52 @@ export class UserService {
       throw new NotFoundError('User profile');
     }
 
+    const isOwnProfile = Boolean(currentUserId && currentUserId === user.id);
+
     return {
       id: user.id,
       username: user.username,
       name: user.name,
+      email: isOwnProfile ? user.email : undefined,
       avatar: user.avatar,
       bio: user.bio || '',
       website: user.website || '',
       category: user.category || '',
       isVerified: user.is_verified || false,
+      isPrivate: Boolean(user.is_private || user.isPrivate),
+      accountType: (user.is_private || user.isPrivate) ? 'private' : 'public',
+      hasRequestedFollow: Boolean(user.hasRequestedFollow),
       followersCount: parseInt(user.followers_count || '0', 10),
       followingCount: parseInt(user.following_count || '0', 10),
       postsCount: parseInt(user.posts_count || '0', 10),
       isFollowing: Boolean(user.isFollowing),
+      isFollowedBy: Boolean(user.isFollowedBy),
       isBlocked: Boolean(user.isBlocked),
     };
   }
 
   async updateProfile(userId: string, updates: any) {
-    const updated = await userRepository.updateProfile(userId, updates);
+    const payload = { ...updates };
+    if (payload.isPrivate !== undefined) {
+      payload.is_private = Boolean(payload.isPrivate);
+      delete payload.isPrivate;
+
+      // If switching to public account, auto-accept all pending follow requests
+      if (!payload.is_private) {
+        await userRepository.acceptAllFollowRequests(userId);
+      }
+    }
+
+    const updated = await userRepository.updateProfile(userId, payload);
     if (!updated) {
       throw new NotFoundError('User');
     }
     await cacheService.delete(CacheKeys.user(userId));
-    return updated;
+    return {
+      ...updated,
+      isPrivate: Boolean(updated.is_private),
+      accountType: updated.is_private ? 'private' : 'public',
+    };
   }
 
   async toggleFollow(currentUserId: string, targetUserId: string) {
@@ -44,15 +66,47 @@ export class UserService {
       throw new BadRequestError('Cannot follow self or invalid user ID');
     }
 
+    const targetUser = await userRepository.findById(targetUserId);
+    if (!targetUser) {
+      throw new NotFoundError('Target user');
+    }
+
     const isFollowing = await userRepository.isFollowing(currentUserId, targetUserId);
     let newIsFollowing = false;
+    let newHasRequested = false;
 
     if (isFollowing) {
+      // Unfollow
       await userRepository.unfollow(currentUserId, targetUserId);
       newIsFollowing = false;
+      newHasRequested = false;
+    } else if (targetUser.is_private) {
+      // Target account is private: check if already requested
+      const alreadyRequested = await userRepository.isFollowRequested(currentUserId, targetUserId);
+      if (alreadyRequested) {
+        // Cancel follow request
+        await userRepository.deleteFollowRequest(currentUserId, targetUserId);
+        newIsFollowing = false;
+        newHasRequested = false;
+      } else {
+        // Send follow request
+        await userRepository.createFollowRequest(currentUserId, targetUserId);
+        newIsFollowing = false;
+        newHasRequested = true;
+
+        // Dispatch background notification
+        await jobQueue.add(JobType.DISPATCH_NOTIFICATION, {
+          recipientId: targetUserId,
+          senderId: currentUserId,
+          type: 'follow_request',
+          text: 'requested to follow you',
+        });
+      }
     } else {
+      // Target account is public: follow immediately
       await userRepository.follow(currentUserId, targetUserId);
       newIsFollowing = true;
+      newHasRequested = false;
 
       // Dispatch background notification
       await jobQueue.add(JobType.DISPATCH_NOTIFICATION, {
@@ -71,19 +125,82 @@ export class UserService {
     return {
       success: true,
       isFollowing: newIsFollowing,
+      hasRequestedFollow: newHasRequested,
       targetFollowersCount,
     };
   }
 
+  async getPendingRequests(currentUserId: string) {
+    if (!currentUserId) throw new BadRequestError('User ID is required');
+    return userRepository.getPendingFollowRequests(currentUserId);
+  }
+
+  async acceptFollowRequest(currentUserId: string, requesterId: string) {
+    if (!currentUserId || !requesterId) {
+      throw new BadRequestError('Current user and requester IDs are required');
+    }
+    await userRepository.acceptFollowRequest(requesterId, currentUserId);
+
+    // Notify the requester that their request was accepted
+    await jobQueue.add(JobType.DISPATCH_NOTIFICATION, {
+      recipientId: requesterId,
+      senderId: currentUserId,
+      type: 'follow',
+      text: 'accepted your follow request',
+    });
+
+    const countRes = await query('SELECT COUNT(*)::int as count FROM follows WHERE following_id = $1', [
+      currentUserId,
+    ]);
+    return {
+      success: true,
+      followersCount: parseInt(countRes.rows[0]?.count || '0', 10),
+    };
+  }
+
+  async declineFollowRequest(currentUserId: string, requesterId: string) {
+    if (!currentUserId || !requesterId) {
+      throw new BadRequestError('Current user and requester IDs are required');
+    }
+    await userRepository.deleteFollowRequest(requesterId, currentUserId);
+    return { success: true };
+  }
+
   async getAllUsers(currentUserId?: string, limit: number = 50) {
-    return userRepository.getAllUsers(currentUserId, limit);
+    const users = await userRepository.getAllUsers(currentUserId, limit);
+    return users.map((u) => ({
+      ...u,
+      isPrivate: Boolean(u.isPrivate || u.is_private),
+      accountType: (u.isPrivate || u.is_private) ? 'private' : 'public',
+      hasRequestedFollow: Boolean(u.hasRequestedFollow),
+    }));
   }
 
   async getFollowers(targetUserId: string, currentUserId?: string) {
+    // If target is private and not the current user and current user is not following, restrict visibility
+    if (currentUserId && targetUserId !== currentUserId) {
+      const targetUser = await userRepository.findById(targetUserId);
+      if (targetUser?.is_private) {
+        const isFollowing = await userRepository.isFollowing(currentUserId, targetUserId);
+        if (!isFollowing) {
+          return [];
+        }
+      }
+    }
     return userRepository.getFollowers(targetUserId, currentUserId);
   }
 
   async getFollowing(targetUserId: string, currentUserId?: string) {
+    // If target is private and not the current user and current user is not following, restrict visibility
+    if (currentUserId && targetUserId !== currentUserId) {
+      const targetUser = await userRepository.findById(targetUserId);
+      if (targetUser?.is_private) {
+        const isFollowing = await userRepository.isFollowing(currentUserId, targetUserId);
+        if (!isFollowing) {
+          return [];
+        }
+      }
+    }
     return userRepository.getFollowing(targetUserId, currentUserId);
   }
 

@@ -57,6 +57,9 @@ export const NotificationsView: React.FC = () => {
     availableProfiles,
     currentUser,
     celebrateAction,
+    pendingFollowRequests,
+    acceptFollowRequest,
+    declineFollowRequest,
   } = useApp();
 
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>('all');
@@ -74,46 +77,32 @@ export const NotificationsView: React.FC = () => {
   // Collapsed state for time sections
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
-  // Simulated Pending Follow Requests for Instagram parity
-  const [followRequests, setFollowRequests] = useState<FollowRequestItem[]>([
-    {
-      id: 'req_1',
+  // Real Pending Follow Requests from backend for Instagram parity
+  const followRequests: FollowRequestItem[] = useMemo(() => {
+    return (pendingFollowRequests || []).map((req) => ({
+      id: req.id || req.user_id,
       user: {
-        id: 'user_alex_creator',
-        username: 'alex_creator',
-        name: 'Alex Rivera',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-        isVerified: true,
+        id: req.id || req.user_id,
+        username: req.username || 'user',
+        name: req.name || req.username || 'User',
+        avatar: req.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+        isVerified: Boolean(req.is_verified || req.isVerified),
       },
-      mutualCount: 14,
-      timeAgo: '1d',
-    },
-    {
-      id: 'req_2',
-      user: {
-        id: 'user_maya_travels',
-        username: 'maya.travels',
-        name: 'Maya Lin',
-        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80',
-        isVerified: false,
-      },
-      mutualCount: 6,
-      timeAgo: '3d',
-    },
-  ]);
+      mutualCount: req.followers_count || 0,
+      timeAgo: 'recently',
+    }));
+  }, [pendingFollowRequests]);
 
   const toggleSectionCollapse = (sectionKey: string) => {
     setCollapsedSections((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
   };
 
   const handleConfirmRequest = (reqId: string, user: User) => {
-    setFollowRequests((prev) => prev.filter((r) => r.id !== reqId));
-    toggleFollowUser(user.id);
-    celebrateAction();
+    acceptFollowRequest(reqId);
   };
 
   const handleDeleteRequest = (reqId: string) => {
-    setFollowRequests((prev) => prev.filter((r) => r.id !== reqId));
+    declineFollowRequest(reqId);
   };
 
   // Sync isFollowing state from availableProfiles for the latest accurate status

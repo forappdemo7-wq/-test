@@ -14,6 +14,10 @@ export interface User {
   followingCount: number;
   postsCount: number;
   isFollowing?: boolean;
+  isFollowedBy?: boolean;
+  isPrivate?: boolean;
+  hasRequestedFollow?: boolean;
+  accountType?: 'public' | 'private';
   pronouns?: string;
   blockedUserIds?: string[];
   note?: {

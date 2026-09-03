@@ -44,7 +44,11 @@ export class ReelRepository extends BaseRepository<any> {
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = r.user_id) as "author_is_following"
       FROM reels r
       JOIN users u ON r.user_id = u.id
-      WHERE 1=1 ${filterClause}
+      WHERE (
+        COALESCE(u.is_private, false) = false
+        OR r.user_id = $1
+        OR EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = r.user_id)
+      ) ${filterClause}
       ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}`,
       params

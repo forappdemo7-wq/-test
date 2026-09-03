@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
-import { Lock, Star, Ban, Check, UserPlus, Search, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { Lock, Star, Ban, Check, UserPlus, Search, ShieldCheck, UserCheck, X, Clock, AlertCircle } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 
 export const SettingsPrivacyView: React.FC = () => {
-  const { availableProfiles, currentUser, blockedUserIds, blockUser, unblockUser } = useApp();
-  const [subSection, setSubSection] = useState<'main' | 'close_friends' | 'blocked'>('main');
-  const [isPrivate, setIsPrivate] = useState(false);
+  const {
+    availableProfiles,
+    currentUser,
+    updateProfile,
+    blockedUserIds,
+    blockUser,
+    unblockUser,
+    pendingFollowRequests,
+    acceptFollowRequest,
+    declineFollowRequest,
+  } = useApp();
+
+  const [subSection, setSubSection] = useState<'main' | 'close_friends' | 'blocked' | 'requests'>('main');
+  const [isPrivate, setIsPrivate] = useState<boolean>(Boolean(currentUser?.isPrivate));
   const [showPrivateConfirm, setShowPrivateConfirm] = useState(false);
+  const [showPublicConfirm, setShowPublicConfirm] = useState(false);
+  const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+      setIsPrivate(Boolean(currentUser.isPrivate));
+    }
+  }, [currentUser?.isPrivate]);
 
   // Close friends list
   const [closeFriendIds, setCloseFriendIds] = useState<string[]>([]);
   const [friendSearch, setFriendSearch] = useState('');
 
-  const otherUsers = availableProfiles.filter((u) => u.id !== currentUser.id);
+  const otherUsers = availableProfiles.filter((u) => u.id !== currentUser?.id);
 
   const filteredFriends = otherUsers.filter(
     (u) =>
@@ -33,6 +53,108 @@ export const SettingsPrivacyView: React.FC = () => {
       await blockUser(userId);
     }
   };
+
+  const handleConfirmSwitchToPrivate = async () => {
+    setIsUpdatingPrivacy(true);
+    try {
+      await updateProfile({ isPrivate: true });
+      setIsPrivate(true);
+      setShowPrivateConfirm(false);
+      toast.success('Account switched to Private');
+    } catch {
+      toast.error('Failed to update account privacy');
+    } finally {
+      setIsUpdatingPrivacy(false);
+    }
+  };
+
+  const handleConfirmSwitchToPublic = async () => {
+    setIsUpdatingPrivacy(true);
+    try {
+      await updateProfile({ isPrivate: false });
+      setIsPrivate(false);
+      setShowPublicConfirm(false);
+      toast.success('Account switched to Public');
+    } catch {
+      toast.error('Failed to update account privacy');
+    } finally {
+      setIsUpdatingPrivacy(false);
+    }
+  };
+
+  if (subSection === 'requests') {
+    return (
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <UserPlus size={20} className="text-blue-500" />
+            <h3 className="text-sm font-bold text-neutral-950 dark:text-white">
+              Follow Requests ({pendingFollowRequests.length})
+            </h3>
+          </div>
+          <p className="text-xs text-neutral-500">
+            People who want to follow you. When you approve, they can see your posts and stories.
+          </p>
+        </div>
+
+        {pendingFollowRequests.length === 0 ? (
+          <div className="py-12 text-center text-neutral-400 space-y-2">
+            <Clock size={36} className="mx-auto text-neutral-400" />
+            <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+              No pending requests
+            </p>
+            <p className="text-xs text-neutral-500">When people request to follow you, they will appear here.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {pendingFollowRequests.map((req) => (
+              <div
+                key={req.id || req.user_id}
+                className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/60"
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={req.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
+                    alt={req.name || req.username}
+                    referrerPolicy="no-referrer"
+                    className="w-10 h-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-neutral-950 dark:text-white">
+                      {req.username}
+                    </p>
+                    <p className="text-[11px] text-neutral-500">{req.name || req.username}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => acceptFollowRequest(req.id || req.user_id)}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => declineFollowRequest(req.id || req.user_id)}
+                    className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-800 dark:text-neutral-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={() => setSubSection('main')}
+          className="w-full py-2.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 text-neutral-800 dark:text-neutral-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
 
   if (subSection === 'close_friends') {
     return (
@@ -188,48 +310,90 @@ export const SettingsPrivacyView: React.FC = () => {
       <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/60 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Lock size={20} className="text-neutral-700 dark:text-neutral-300" />
+            <Lock size={20} className={isPrivate ? "text-blue-500" : "text-neutral-700 dark:text-neutral-300"} />
             <div>
-              <p className="text-sm font-semibold text-neutral-950 dark:text-white">
-                Private Account
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-neutral-950 dark:text-white">
+                  Private Account
+                </p>
+                {isPrivate && (
+                  <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                    Private
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-neutral-500">
-                {isPrivate ? 'Only approved followers can see your content' : 'Anyone on or off InstaVibe can see your posts'}
+                {isPrivate ? 'Only approved followers can see your photos, reels, and stories' : 'Anyone on or off InstaVibe can see your posts and stories'}
               </p>
             </div>
           </div>
           <input
             type="checkbox"
             checked={isPrivate}
+            disabled={isUpdatingPrivacy}
             onChange={(e) => {
               if (e.target.checked) {
                 setShowPrivateConfirm(true);
+                setShowPublicConfirm(false);
               } else {
-                setIsPrivate(false);
+                setShowPublicConfirm(true);
+                setShowPrivateConfirm(false);
               }
             }}
-            className="w-5 h-5 accent-blue-500 cursor-pointer"
+            className="w-5 h-5 accent-blue-500 cursor-pointer disabled:opacity-50"
           />
         </div>
 
+        {/* Confirmation Modal to Switch to Private */}
         {showPrivateConfirm && (
-          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 space-y-2 text-xs">
-            <p className="font-bold text-blue-900 dark:text-blue-200">Switch to private account?</p>
+          <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 space-y-2 text-xs">
+            <div className="flex items-center gap-1.5 font-bold text-blue-900 dark:text-blue-200">
+              <Lock size={15} />
+              <span>Switch to private account?</span>
+            </div>
             <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
-              Only people you approve will be able to see your photos and videos. Existing followers won&apos;t be affected.
+              Only people you approve will be able to see your photos, reels, and stories. Existing followers won&apos;t be affected.
             </p>
             <div className="flex items-center gap-2 pt-1">
               <button
-                onClick={() => {
-                  setIsPrivate(true);
-                  setShowPrivateConfirm(false);
-                }}
-                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-bold cursor-pointer"
+                onClick={handleConfirmSwitchToPrivate}
+                disabled={isUpdatingPrivacy}
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold cursor-pointer disabled:opacity-50 shadow-xs"
               >
-                Switch to Private
+                {isUpdatingPrivacy ? 'Updating...' : 'Switch to Private'}
               </button>
               <button
                 onClick={() => setShowPrivateConfirm(false)}
+                disabled={isUpdatingPrivacy}
+                className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-white rounded-lg font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Modal to Switch to Public */}
+        {showPublicConfirm && (
+          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 space-y-2 text-xs">
+            <div className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-200">
+              <AlertCircle size={15} />
+              <span>Switch to public account?</span>
+            </div>
+            <p className="text-amber-700 dark:text-amber-300 leading-relaxed">
+              Anyone on or off InstaVibe will be able to see your photos, reels, and stories. Any pending follow requests will be automatically accepted.
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={handleConfirmSwitchToPublic}
+                disabled={isUpdatingPrivacy}
+                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold cursor-pointer disabled:opacity-50 shadow-xs"
+              >
+                {isUpdatingPrivacy ? 'Updating...' : 'Switch to Public'}
+              </button>
+              <button
+                onClick={() => setShowPublicConfirm(false)}
+                disabled={isUpdatingPrivacy}
                 className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-white rounded-lg font-semibold cursor-pointer"
               >
                 Cancel
@@ -238,6 +402,40 @@ export const SettingsPrivacyView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Follow Requests Shortcut (if private or has pending requests) */}
+      {(isPrivate || pendingFollowRequests.length > 0) && (
+        <button
+          onClick={() => setSubSection('requests')}
+          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/60 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <UserPlus size={20} className="text-blue-500" />
+              {pendingFollowRequests.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-neutral-950 dark:text-white">
+                Follow Requests
+              </p>
+              <p className="text-xs text-neutral-500">
+                {pendingFollowRequests.length === 0
+                  ? 'No pending requests'
+                  : `${pendingFollowRequests.length} pending request${pendingFollowRequests.length > 1 ? 's' : ''}`}
+              </p>
+            </div>
+          </div>
+          {pendingFollowRequests.length > 0 ? (
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-500 text-white text-xs font-bold">
+              {pendingFollowRequests.length}
+            </span>
+          ) : (
+            <span className="text-xs font-bold text-neutral-400">View</span>
+          )}
+        </button>
+      )}
 
       {/* 2. Close Friends button */}
       <button
@@ -273,3 +471,4 @@ export const SettingsPrivacyView: React.FC = () => {
     </div>
   );
 };
+

@@ -10,6 +10,7 @@ export interface UserEntity {
   avatar?: string;
   bio?: string;
   is_verified?: boolean;
+  is_private?: boolean;
   followers_count?: number;
   following_count?: number;
   posts_count?: number;
@@ -88,10 +89,13 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const res = await query(
       `SELECT 
         u.*,
+        u.is_private as "isPrivate",
         (SELECT COUNT(*)::int FROM posts WHERE user_id = u.id) as posts_count,
         (SELECT COUNT(*)::int FROM follows WHERE following_id = u.id) as followers_count,
         (SELECT COUNT(*)::int FROM follows WHERE follower_id = u.id) as following_count,
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy",
+        EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $2 AND target_id = u.id) as "hasRequestedFollow",
         EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $2 AND blocked_id = u.id) as "isBlocked"
       FROM users u
       WHERE u.id = $1`,
@@ -122,15 +126,80 @@ export class UserRepository extends BaseRepository<UserEntity> {
     ]);
   }
 
+  async isFollowRequested(requesterId: string, targetId: string): Promise<boolean> {
+    const res = await query('SELECT 1 FROM follow_requests WHERE requester_id = $1 AND target_id = $2', [
+      requesterId,
+      targetId,
+    ]);
+    return res.rows.length > 0;
+  }
+
+  async createFollowRequest(requesterId: string, targetId: string): Promise<void> {
+    await query('INSERT INTO follow_requests (requester_id, target_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [
+      requesterId,
+      targetId,
+    ]);
+  }
+
+  async deleteFollowRequest(requesterId: string, targetId: string): Promise<void> {
+    await query('DELETE FROM follow_requests WHERE requester_id = $1 AND target_id = $2', [
+      requesterId,
+      targetId,
+    ]);
+  }
+
+  async getPendingFollowRequests(targetUserId: string): Promise<any[]> {
+    const res = await query(
+      `SELECT 
+        fr.requester_id as id,
+        fr.created_at,
+        u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified",
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = u.id) as "isFollowing",
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $1) as "isFollowedBy"
+      FROM follow_requests fr
+      JOIN users u ON u.id = fr.requester_id
+      WHERE fr.target_id = $1
+      ORDER BY fr.created_at DESC`,
+      [targetUserId]
+    );
+    return res.rows;
+  }
+
+  async acceptFollowRequest(requesterId: string, targetUserId: string): Promise<void> {
+    await query('DELETE FROM follow_requests WHERE requester_id = $1 AND target_id = $2', [
+      requesterId,
+      targetUserId,
+    ]);
+    await query('INSERT INTO follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [
+      requesterId,
+      targetUserId,
+    ]);
+  }
+
+  async acceptAllFollowRequests(targetUserId: string): Promise<void> {
+    await query(
+      `INSERT INTO follows (follower_id, following_id)
+       SELECT requester_id, target_id FROM follow_requests WHERE target_id = $1
+       ON CONFLICT DO NOTHING`,
+      [targetUserId]
+    );
+    await query('DELETE FROM follow_requests WHERE target_id = $1', [targetUserId]);
+  }
+
   async getAllUsers(currentUserId?: string, limit: number = 50): Promise<any[]> {
     const res = await query(
       `SELECT 
-        u.id, u.username, u.name, u.email, u.avatar, u.bio, u.website, u.category,
+        u.id, u.username, u.name,
+        CASE WHEN u.id = $1 THEN u.email ELSE NULL END as email,
+        u.avatar, u.bio, u.website, u.category,
         u.is_verified as "isVerified",
+        u.is_private as "isPrivate",
         (SELECT COUNT(*)::int FROM posts WHERE user_id = u.id) as "postsCount",
         (SELECT COUNT(*)::int FROM follows WHERE following_id = u.id) as "followersCount",
         (SELECT COUNT(*)::int FROM follows WHERE follower_id = u.id) as "followingCount",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = u.id) as "isFollowing",
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $1) as "isFollowedBy",
+        EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $1 AND target_id = u.id) as "hasRequestedFollow",
         EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $1 AND blocked_id = u.id) as "isBlocked"
       FROM users u
       ORDER BY u.created_at ASC
@@ -144,7 +213,8 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const res = await query(
       `SELECT 
         u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified",
-        EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing"
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy"
       FROM follows f
       JOIN users u ON u.id = f.follower_id
       WHERE f.following_id = $1`,
@@ -157,7 +227,8 @@ export class UserRepository extends BaseRepository<UserEntity> {
     const res = await query(
       `SELECT 
         u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified",
-        EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing"
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy"
       FROM follows f
       JOIN users u ON u.id = f.following_id
       WHERE f.follower_id = $1`,

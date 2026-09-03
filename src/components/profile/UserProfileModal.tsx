@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   X,
   UserCheck,
@@ -11,6 +12,8 @@ import {
   Link as LinkIcon,
   Check,
   ShieldAlert,
+  Lock,
+  Clock,
 } from 'lucide-react';
 import { User, Post, Reel } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -34,9 +37,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
     setSelectedPostForDetail,
     setActiveReelIndex,
     setActiveTab,
-    setActiveThreadId,
     openChatWithUser,
-    threads,
     openStoryViewer,
     blockedUserIds,
     blockUser,
@@ -51,11 +52,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
 
   const isCurrentUser = currentUser ? user.id === currentUser.id : false;
   const isBlocked = blockedUserIds.includes(user.id);
+  const isPrivateAccount = Boolean(user.isPrivate) && !isCurrentUser && !user.isFollowing;
   const userPosts = posts.filter((p) => p.author.id === user.id);
   const userReels = reels.filter((r) => r.author.id === user.id);
   const userStoryIndex = stories.findIndex((s) => s.userId === user.id);
 
   const handleMessage = () => {
+    if (!user.isFollowing || !user.isFollowedBy) {
+      toast.error('You can only message users that you mutually follow.');
+      return;
+    }
     onClose();
     openChatWithUser(user);
   };
@@ -93,6 +99,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
         {/* Modal Top Bar */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-neutral-800 flex-shrink-0">
           <div className="flex items-center gap-1.5 min-w-0">
+            {user.isPrivate && (
+              <Lock size={14} className="text-slate-500 dark:text-neutral-400 flex-shrink-0" />
+            )}
             <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
               {user.username}
             </span>
@@ -118,9 +127,13 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
               <StoryRing
                 avatar={user.avatar}
                 username={user.username}
-                hasUnseen={userStoryIndex >= 0 ? stories[userStoryIndex].hasUnseen : false}
+                hasUnseen={!isPrivateAccount && userStoryIndex >= 0 ? stories[userStoryIndex].hasUnseen : false}
                 size="lg"
                 onClick={() => {
+                  if (isPrivateAccount) {
+                    toast('This account is private. Follow them to see their stories.', { icon: '🔒' });
+                    return;
+                  }
                   if (userStoryIndex >= 0 && stories[userStoryIndex].items.length > 0) {
                     onClose();
                     openStoryViewer(userStoryIndex);
@@ -139,6 +152,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
 
               <button
                 onClick={() => {
+                  if (isPrivateAccount) {
+                    toast('Follow this account to see their followers.', { icon: '🔒' });
+                    return;
+                  }
                   onClose();
                   openFollowersModal(user.id);
                 }}
@@ -154,6 +171,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
 
               <button
                 onClick={() => {
+                  if (isPrivateAccount) {
+                    toast('Follow this account to see who they follow.', { icon: '🔒' });
+                    return;
+                  }
                   onClose();
                   openFollowingModal(user.id);
                 }}
@@ -197,12 +218,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
                   className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 ${
                     user.isFollowing
                       ? 'bg-slate-100 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 hover:bg-slate-200 dark:hover:bg-neutral-700'
+                      : user.hasRequestedFollow
+                      ? 'bg-slate-100 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 hover:bg-slate-200 dark:hover:bg-neutral-700 border border-slate-300 dark:border-neutral-700'
                       : 'bg-blue-500 hover:bg-blue-600 text-white shadow-sm'
                   }`}
                 >
                   {user.isFollowing ? (
                     <>
                       <UserCheck size={15} /> Following
+                    </>
+                  ) : user.hasRequestedFollow ? (
+                    <>
+                      <Clock size={15} /> Requested
                     </>
                   ) : (
                     <>
@@ -240,85 +267,102 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
             </button>
           </div>
 
-          {/* Tab Navigation (Posts / Reels) */}
-          <div className="flex items-center justify-around border-t border-slate-100 dark:border-neutral-800 pt-3">
-            <button
-              onClick={() => setActiveTabLocal('grid')}
-              className={`flex items-center gap-2 pb-2 text-xs font-bold tracking-wider transition-colors cursor-pointer border-b-2 ${
-                activeTab === 'grid'
-                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                  : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300'
-              }`}
-            >
-              <Grid size={15} /> POSTS ({userPosts.length})
-            </button>
-            <button
-              onClick={() => setActiveTabLocal('reels')}
-              className={`flex items-center gap-2 pb-2 text-xs font-bold tracking-wider transition-colors cursor-pointer border-b-2 ${
-                activeTab === 'reels'
-                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                  : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300'
-              }`}
-            >
-              <Clapperboard size={15} /> REELS ({userReels.length})
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'grid' ? (
-            userPosts.length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-400">No posts yet</div>
-            ) : (
-              <div className="grid grid-cols-3 gap-1.5">
-                {userPosts.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => {
-                      onClose();
-                      setSelectedPostForDetail(p);
-                    }}
-                    className="relative aspect-square group bg-slate-100 dark:bg-neutral-800 overflow-hidden cursor-pointer rounded-lg"
-                  >
-                    <img
-                      src={p.media[0]?.url}
-                      alt={p.caption || 'User post'}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                ))}
+          {/* Conditional rendering: If Account is Private & not followed, show Lock message */}
+          {isPrivateAccount ? (
+            <div className="py-14 px-6 text-center flex flex-col items-center justify-center space-y-3 border-t border-slate-100 dark:border-neutral-800">
+              <div className="w-16 h-16 rounded-full border-2 border-slate-900 dark:border-white flex items-center justify-center text-slate-900 dark:text-white mb-1">
+                <Lock size={28} />
               </div>
-            )
-          ) : userReels.length === 0 ? (
-            <div className="py-10 text-center text-xs text-slate-400">No reels yet</div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1.5">
-              {userReels.map((r) => (
-                <div
-                  key={r.id}
-                  onClick={() => {
-                    const rIdx = reels.findIndex((rel) => rel.id === r.id);
-                    if (rIdx >= 0) {
-                      setActiveReelIndex(rIdx);
-                    }
-                    onClose();
-                    setActiveTab('reels');
-                  }}
-                  className="relative aspect-[9/16] group bg-slate-100 dark:bg-neutral-800 overflow-hidden cursor-pointer rounded-lg"
-                >
-                  <img
-                    src={r.posterUrl || r.videoUrl}
-                    alt="Reel preview"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-white text-[10px] font-semibold drop-shadow-md">
-                    <Clapperboard size={12} />
-                    <span>{r.likesCount}</span>
-                  </div>
-                </div>
-              ))}
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                This Account is Private
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-neutral-400 max-w-xs leading-relaxed">
+                Follow this account to see their photos and videos.
+              </p>
             </div>
+          ) : (
+            <>
+              {/* Tab Navigation (Posts / Reels) */}
+              <div className="flex items-center justify-around border-t border-slate-100 dark:border-neutral-800 pt-3">
+                <button
+                  onClick={() => setActiveTabLocal('grid')}
+                  className={`flex items-center gap-2 pb-2 text-xs font-bold tracking-wider transition-colors cursor-pointer border-b-2 ${
+                    activeTab === 'grid'
+                      ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
+                      : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300'
+                  }`}
+                >
+                  <Grid size={15} /> POSTS ({userPosts.length})
+                </button>
+                <button
+                  onClick={() => setActiveTabLocal('reels')}
+                  className={`flex items-center gap-2 pb-2 text-xs font-bold tracking-wider transition-colors cursor-pointer border-b-2 ${
+                    activeTab === 'reels'
+                      ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
+                      : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300'
+                  }`}
+                >
+                  <Clapperboard size={15} /> REELS ({userReels.length})
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              {activeTab === 'grid' ? (
+                userPosts.length === 0 ? (
+                  <div className="py-10 text-center text-xs text-slate-400">No posts yet</div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {userPosts.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          onClose();
+                          setSelectedPostForDetail(p);
+                        }}
+                        className="relative aspect-square group bg-slate-100 dark:bg-neutral-800 overflow-hidden cursor-pointer rounded-lg"
+                      >
+                        <img
+                          src={p.media[0]?.url}
+                          alt={p.caption || 'User post'}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : userReels.length === 0 ? (
+                <div className="py-10 text-center text-xs text-slate-400">No reels yet</div>
+              ) : (
+                <div className="grid grid-cols-3 gap-1.5">
+                  {userReels.map((r) => (
+                    <div
+                      key={r.id}
+                      onClick={() => {
+                        const rIdx = reels.findIndex((rel) => rel.id === r.id);
+                        if (rIdx >= 0) {
+                          setActiveReelIndex(rIdx);
+                        }
+                        onClose();
+                        setActiveTab('reels');
+                      }}
+                      className="relative aspect-[9/16] group bg-slate-100 dark:bg-neutral-800 overflow-hidden cursor-pointer rounded-lg"
+                    >
+                      <img
+                        src={r.posterUrl || r.videoUrl}
+                        alt="Reel preview"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-white text-[10px] font-semibold drop-shadow-md">
+                        <Clapperboard size={12} />
+                        <span>{r.likesCount}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

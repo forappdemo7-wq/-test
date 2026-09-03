@@ -14,6 +14,7 @@ import {
   Trash2,
   UserCheck,
   UserPlus,
+  Clock,
   Link,
   MapPin,
   Smile,
@@ -155,12 +156,16 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
                       toggleFollowUser(post.author.id);
                     }}
                     className={`text-xs font-semibold cursor-pointer transition-colors active:scale-95 ${
-                      post.author.isFollowing
+                      post.author.isFollowing || post.author.hasRequestedFollow
                         ? 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                         : 'text-blue-500 hover:text-blue-700 font-bold'
                     }`}
                   >
-                    {post.author.isFollowing ? 'Following' : 'Follow'}
+                    {post.author.isFollowing
+                      ? 'Following'
+                      : post.author.hasRequestedFollow
+                      ? 'Requested'
+                      : 'Follow'}
                   </button>
                 </>
               )}
@@ -220,6 +225,10 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
                     {post.author.isFollowing ? (
                       <>
                         <UserCheck size={16} className="text-neutral-400" /> Unfollow
+                      </>
+                    ) : post.author.hasRequestedFollow ? (
+                      <>
+                        <Clock size={16} className="text-neutral-400" /> Cancel Request
                       </>
                     ) : (
                       <>

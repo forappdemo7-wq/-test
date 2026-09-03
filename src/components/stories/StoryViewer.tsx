@@ -66,6 +66,7 @@ export const StoryViewer: React.FC = () => {
   const {
     currentUser,
     stories,
+    availableProfiles,
     activeStoryGroupIndex,
     closeStoryViewer,
     nextStoryGroup,
@@ -106,6 +107,10 @@ export const StoryViewer: React.FC = () => {
   const currentGroup = activeStoryGroupIndex !== null ? stories[activeStoryGroupIndex] : null;
   const currentSlide = currentGroup?.items[currentSlideIndex];
   const isOwnStory = currentGroup && currentUser ? currentGroup.userId === currentUser.id : false;
+  
+  const targetUser = availableProfiles.find(u => u.id === currentGroup?.userId);
+  const canMessage = isOwnStory || (targetUser?.isFollowing && targetUser?.isFollowedBy);
+
   const isLiked = currentSlide?.isLiked || false;
 
   const isVideoStory = Boolean(
@@ -935,6 +940,17 @@ export const StoryViewer: React.FC = () => {
                 >
                   <Trash2 size={18} />
                 </button>
+              </div>
+            </div>
+          ) : !canMessage ? (
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  disabled
+                  placeholder="You must follow each other to send messages."
+                  className="w-full bg-transparent border border-white/20 text-white/50 text-xs sm:text-sm rounded-full py-2.5 pl-4 outline-none backdrop-blur-md cursor-not-allowed"
+                />
               </div>
             </div>
           ) : (

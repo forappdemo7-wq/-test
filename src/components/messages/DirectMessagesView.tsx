@@ -183,25 +183,15 @@ export const DirectMessagesView: React.FC = () => {
           {isAccountMenuOpen && (
             <div className="absolute top-10 left-0 z-50 w-64 bg-white dark:bg-neutral-900 rounded-3xl shadow-soft-2xl border border-neutral-200/80 dark:border-neutral-800 p-2 space-y-1 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-3 py-1.5 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                Switch Profile
+                Active Profile
               </div>
               <div className="space-y-1 max-h-48 overflow-y-auto no-scrollbar">
                 {savedAccounts
-                  .filter((p) => p && p.id && p.id !== 'guest_user')
+                  .filter((p) => p && p.id && p.id !== 'guest_user' && (!currentUser || p.id === currentUser.id))
                   .map((p) => (
-                    <button
+                    <div
                       key={p.id}
-                      onClick={() => {
-                        if (currentUser?.id !== p.id) {
-                          switchProfile(p);
-                        }
-                        setIsAccountMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${
-                        currentUser?.id === p.id
-                          ? 'bg-neutral-100 dark:bg-neutral-800 font-bold text-neutral-950 dark:text-white'
-                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300'
-                      }`}
+                      className="w-full flex items-center justify-between p-2 rounded-2xl bg-neutral-100 dark:bg-neutral-800 font-bold text-neutral-950 dark:text-white"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <img
@@ -215,20 +205,15 @@ export const DirectMessagesView: React.FC = () => {
                           <p className="text-[10px] text-neutral-400 leading-tight truncate">{p.name}</p>
                         </div>
                       </div>
-                      {currentUser?.id === p.id && (
-                        <span className="w-2 h-2 rounded-full bg-blue-500 mr-1" />
-                      )}
-                    </button>
+                      <span className="w-2 h-2 rounded-full bg-blue-500 mr-1" />
+                    </div>
                   ))}
-
-                {savedAccounts.filter((p) => p && p.id && p.id !== 'guest_user').length <= 1 && (
-                  <div className="px-3 py-2 text-[11px] text-neutral-500 dark:text-neutral-400">
-                    No other accounts saved on this device.
-                  </div>
-                )}
               </div>
 
               <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                <p className="px-3 py-1 text-[10px] text-neutral-400">
+                  Only your authenticated profile is accessible.
+                </p>
                 <button
                   onClick={() => {
                     setIsAccountMenuOpen(false);

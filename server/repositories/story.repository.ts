@@ -18,8 +18,13 @@ export class StoryRepository extends BaseRepository<any> {
         (SELECT COUNT(*) FROM story_likes WHERE story_id = s.id)::int as "likesCount"
       FROM stories s
       JOIN users u ON s.user_id = u.id
+      WHERE (
+        COALESCE(u.is_private, false) = false
+        OR s.user_id = $1
+        OR EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = s.user_id)
+      )
       ORDER BY s.created_at DESC`,
-      [currentUserId || 'user_current']
+      [currentUserId || 'none']
     );
     return res.rows;
   }

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import toast from 'react-hot-toast';
 import {
   User,
   Post,
@@ -284,8 +285,12 @@ interface AppContextType {
   // Explore selection
   openExplorePost: (postData: any) => void;
 
-  // Follow / Unfollow
+  // Follow / Unfollow & Privacy Requests
   toggleFollowUser: (userId: string) => Promise<void>;
+  pendingFollowRequests: any[];
+  acceptFollowRequest: (requesterId: string) => Promise<void>;
+  declineFollowRequest: (requesterId: string) => Promise<void>;
+  fetchPendingRequests: () => Promise<void>;
   celebrateAction: () => void;
   refreshData: () => Promise<void>;
 }
@@ -315,20 +320,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const isAuthenticated = Boolean(currentUser && currentUser.id && currentUser.id !== 'guest_user');
 
   const [savedAccounts, setSavedAccounts] = useState<User[]>(() => {
-    let loadedAccounts: User[] = [];
-    try {
-      const saved = localStorage.getItem('instavibe_saved_accounts');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          loadedAccounts = parsed.filter(
-            (u) => u && u.id && u.id !== 'guest_user' && !u.username?.toLowerCase().includes('demo')
-          );
-        }
-      }
-    } catch {}
-    
-    // Add current user if single key exists but array doesn't have it
     try {
       const single = localStorage.getItem('instavibe_user');
       if (single) {
@@ -337,20 +328,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           u &&
           u.id &&
           u.id !== 'guest_user' &&
-          !u.username?.toLowerCase().includes('demo') &&
-          !loadedAccounts.some((a) => a.id === u.id)
+          !u.username?.toLowerCase().includes('demo')
         ) {
-          loadedAccounts.push(u);
+          localStorage.setItem('instavibe_saved_accounts', JSON.stringify([u]));
+          return [u];
         }
       }
     } catch {}
-    
-    // Auto-update to remove demo users from storage
-    if (loadedAccounts.length >= 0) {
-      localStorage.setItem('instavibe_saved_accounts', JSON.stringify(loadedAccounts));
-    }
-    
-    return loadedAccounts;
+    localStorage.removeItem('instavibe_saved_accounts');
+    return [];
   });
 
   const [availableProfiles, setAvailableProfiles] = useState<User[]>([]);
@@ -395,6 +381,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Real-time online users list
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
+
+  // Pending follow requests for private accounts
+  const [pendingFollowRequests, setPendingFollowRequests] = useState<any[]>([]);
 
   // Push Notifications state
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() => {
@@ -496,17 +485,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [activeThreadId]);
 
-  // Helper to persist saved accounts for multi-account switching
+  // Helper to persist authenticated user account
   const persistSavedAccount = (user: User) => {
     if (!user || !user.id || user.id === 'guest_user') return;
-    setSavedAccounts((prev) => {
-      const filtered = prev.filter((u) => u.id !== user.id);
-      const updated = [user, ...filtered];
-      try {
-        localStorage.setItem('instavibe_saved_accounts', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
+    setSavedAccounts([user]);
+    try {
+      localStorage.setItem('instavibe_saved_accounts', JSON.stringify([user]));
+    } catch {}
   };
 
   const removeSavedAccount = (userId: string) => {
@@ -519,12 +504,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     if (currentUser?.id === userId) {
-      const remaining = savedAccounts.filter((u) => u.id !== userId);
-      if (remaining.length > 0) {
-        switchProfile(remaining[0]);
-      } else {
-        logout();
-      }
+      logout();
     }
   };
 
@@ -656,23 +636,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const data = await safeJson(usersRes.value);
         if (Array.isArray(data) && data.length > 0) {
           setAvailableProfiles(data);
-          // If currentUser is logged in, sync stats only if they actually changed
-          if (currentUser?.id && currentUser.id !== 'guest_user') {
-            const found = data.find((u: User) => u.id === currentUser.id);
-            if (found) {
+        }
+      }
+
+      // Explicit Authenticated User Lookup: strictly fetch the current user's own profile
+      if (currentUser?.id && currentUser.id !== 'guest_user') {
+        try {
+          const authUserRes = await fetch(`/api/users/${currentUser.id}?currentUserId=${currentUser.id}`);
+          if (authUserRes.ok) {
+            const authUserData = await safeJson(authUserRes);
+            if (authUserData && authUserData.id === currentUser.id) {
+              const serverIsPrivate = Boolean(authUserData.isPrivate ?? authUserData.is_private);
               if (
-                currentUser.followersCount !== found.followersCount ||
-                currentUser.followingCount !== found.followingCount ||
-                currentUser.postsCount !== found.postsCount ||
-                currentUser.name !== found.name ||
-                currentUser.avatar !== found.avatar ||
-                currentUser.bio !== found.bio
+                currentUser.followersCount !== authUserData.followersCount ||
+                currentUser.followingCount !== authUserData.followingCount ||
+                currentUser.postsCount !== authUserData.postsCount ||
+                currentUser.name !== authUserData.name ||
+                currentUser.avatar !== authUserData.avatar ||
+                currentUser.bio !== authUserData.bio ||
+                currentUser.email !== authUserData.email ||
+                currentUser.isPrivate !== serverIsPrivate
               ) {
-                setCurrentUser(found);
-                localStorage.setItem('instavibe_user', JSON.stringify(found));
+                const merged = { ...currentUser, ...authUserData, isPrivate: serverIsPrivate };
+                setCurrentUser(merged);
+                localStorage.setItem('instavibe_user', JSON.stringify(merged));
               }
             }
           }
+
+          // Fetch pending follow requests if current account is private
+          const reqRes = await fetch(`/api/users/requests/pending?currentUserId=${currentUser.id}`);
+          if (reqRes.ok) {
+            const reqData = await safeJson(reqRes);
+            if (Array.isArray(reqData)) {
+              setPendingFollowRequests(reqData);
+            }
+          }
+        } catch (e) {
+          console.warn('Authenticated user profile lookup failed:', e);
         }
       }
 
@@ -1287,10 +1288,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const switchProfile = (user: User) => {
-    // Strict privacy check: only allow switching to an account that is already in savedAccounts on this device
-    const isSaved = savedAccounts.some((u) => u.id === user.id);
-    if (!isSaved && user.id !== currentUser?.id) {
-      console.warn('Unauthorized account switch attempt: account is not saved on this device');
+    // Strict isolation: users can only see or access their own authenticated profile data
+    if (!currentUser || !currentUser.id || user.id !== currentUser.id) {
+      toast.error('You can only access your own authenticated profile data.');
+      console.warn('Unauthorized account switch attempt blocked: cannot switch to another user account');
       return;
     }
     setActiveThreadId(null);
@@ -1321,8 +1322,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (res.ok) {
         const data = await res.json();
-        setCurrentUser(data);
-        localStorage.setItem('instavibe_user', JSON.stringify(data));
+        const serverUser = data.user || data;
+        const merged = { ...updatedUser, ...serverUser, isPrivate: serverUser.isPrivate ?? serverUser.is_private ?? updatedUser.isPrivate };
+        setCurrentUser(merged);
+        localStorage.setItem('instavibe_user', JSON.stringify(merged));
+        persistSavedAccount(merged);
       }
     } catch (e) {
       console.error('Failed to persist profile update:', e);
@@ -2053,6 +2057,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
+    if (receiverUser && (!receiverUser.isFollowing || !receiverUser.isFollowedBy)) {
+      toast.error('You can only message users that you mutually follow.');
+      return;
+    }
+
     const newMsg: DirectMessage = {
       id: 'msg_' + Date.now(),
       senderId: currentUser.id,
@@ -2494,24 +2503,108 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
   const unreadMessagesCount = threads.reduce((acc, t) => acc + t.unreadCount, 0);
 
+  const fetchPendingRequests = useCallback(async () => {
+    if (!currentUser?.id || currentUser.id === 'guest_user') return;
+    try {
+      const res = await fetch(`/api/users/requests/pending?currentUserId=${currentUser.id}`);
+      if (res.ok) {
+        const data = await safeJson(res);
+        if (Array.isArray(data)) setPendingFollowRequests(data);
+      }
+    } catch {}
+  }, [currentUser?.id]);
+
+  const acceptFollowRequest = async (requesterId: string) => {
+    if (!currentUser?.id) return;
+    // Optimistic update
+    setPendingFollowRequests((prev) => prev.filter((r) => r.id !== requesterId));
+    setNotifications((prev) => prev.filter((n) => !(n.type === 'follow_request' && n.user.id === requesterId)));
+    setCurrentUser((prev) => (prev ? { ...prev, followersCount: (prev.followersCount || 0) + 1 } : prev));
+    celebrateAction();
+
+    try {
+      const res = await fetch(`/api/users/requests/${requesterId}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUserId: currentUser.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.followersCount === 'number') {
+          setCurrentUser((prev) => (prev ? { ...prev, followersCount: data.followersCount } : prev));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to accept follow request:', e);
+    }
+  };
+
+  const declineFollowRequest = async (requesterId: string) => {
+    if (!currentUser?.id) return;
+    // Optimistic update
+    setPendingFollowRequests((prev) => prev.filter((r) => r.id !== requesterId));
+    setNotifications((prev) => prev.filter((n) => !(n.type === 'follow_request' && n.user.id === requesterId)));
+
+    try {
+      await fetch(`/api/users/requests/${requesterId}/decline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentUserId: currentUser.id }),
+      });
+    } catch (e) {
+      console.error('Failed to decline follow request:', e);
+    }
+  };
+
   const toggleFollowUser = async (userId: string) => {
     if (!userId || !currentUser?.id || userId === currentUser.id) return;
 
-    // 1. Optimistic calculation: find if currently following
-    let willFollow = true;
+    // 1. Determine target profile and status
     const targetInProfiles = availableProfiles.find((u) => u.id === userId);
     const targetInPosts = posts.find((p) => p.author.id === userId)?.author;
-    const currentIsFollowing = targetInProfiles?.isFollowing ?? targetInPosts?.isFollowing ?? (selectedUserProfile?.id === userId ? selectedUserProfile.isFollowing : false);
-    willFollow = !currentIsFollowing;
+    const target = targetInProfiles || targetInPosts || (selectedUserProfile?.id === userId ? selectedUserProfile : null);
+
+    const isTargetPrivate = Boolean(target?.isPrivate);
+    const currentIsFollowing = Boolean(target?.isFollowing);
+    const currentHasRequested = Boolean(target?.hasRequestedFollow);
+
+    let willFollow = false;
+    let willRequest = false;
+
+    if (currentIsFollowing) {
+      // Unfollow
+      willFollow = false;
+      willRequest = false;
+    } else if (isTargetPrivate) {
+      // Private account
+      if (currentHasRequested) {
+        // Cancel request
+        willFollow = false;
+        willRequest = false;
+      } else {
+        // Send request
+        willFollow = false;
+        willRequest = true;
+      }
+    } else {
+      // Public account: direct follow
+      willFollow = true;
+      willRequest = false;
+    }
 
     // 2. Optimistic update of availableProfiles
     setAvailableProfiles((prev) =>
       prev.map((u) => {
         if (u.id === userId) {
-          const nextFollowers = willFollow ? (u.followersCount || 0) + 1 : Math.max(0, (u.followersCount || 0) - 1);
+          const nextFollowers = willFollow
+            ? (u.followersCount || 0) + 1
+            : currentIsFollowing
+            ? Math.max(0, (u.followersCount || 0) - 1)
+            : (u.followersCount || 0);
           return {
             ...u,
             isFollowing: willFollow,
+            hasRequestedFollow: willRequest,
             followersCount: nextFollowers,
           };
         }
@@ -2523,12 +2616,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPosts((prev) =>
       prev.map((p) => {
         if (p.author.id === userId) {
-          const nextFollowers = willFollow ? (p.author.followersCount || 0) + 1 : Math.max(0, (p.author.followersCount || 0) - 1);
+          const nextFollowers = willFollow
+            ? (p.author.followersCount || 0) + 1
+            : currentIsFollowing
+            ? Math.max(0, (p.author.followersCount || 0) - 1)
+            : (p.author.followersCount || 0);
           return {
             ...p,
             author: {
               ...p.author,
               isFollowing: willFollow,
+              hasRequestedFollow: willRequest,
               followersCount: nextFollowers,
             },
           };
@@ -2546,9 +2644,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               author: {
                 ...prev.author,
                 isFollowing: willFollow,
+                hasRequestedFollow: willRequest,
                 followersCount: willFollow
                   ? (prev.author.followersCount || 0) + 1
-                  : Math.max(0, (prev.author.followersCount || 0) - 1),
+                  : currentIsFollowing
+                  ? Math.max(0, (prev.author.followersCount || 0) - 1)
+                  : (prev.author.followersCount || 0),
               },
             }
           : null
@@ -2558,10 +2659,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 5. Optimistic update of selectedUserProfile modal if open
     setSelectedUserProfile((prev) => {
       if (prev && prev.id === userId) {
-        const nextFollowers = willFollow ? (prev.followersCount || 0) + 1 : Math.max(0, (prev.followersCount || 0) - 1);
+        const nextFollowers = willFollow
+          ? (prev.followersCount || 0) + 1
+          : currentIsFollowing
+          ? Math.max(0, (prev.followersCount || 0) - 1)
+          : (prev.followersCount || 0);
         return {
           ...prev,
           isFollowing: willFollow,
+          hasRequestedFollow: willRequest,
           followersCount: nextFollowers,
         };
       }
@@ -2575,10 +2681,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...prev,
         users: prev.users.map((u) => {
           if (u.id === userId) {
-            const nextFollowers = willFollow ? (u.followersCount || 0) + 1 : Math.max(0, (u.followersCount || 0) - 1);
+            const nextFollowers = willFollow
+              ? (u.followersCount || 0) + 1
+              : currentIsFollowing
+              ? Math.max(0, (u.followersCount || 0) - 1)
+              : (u.followersCount || 0);
             return {
               ...u,
               isFollowing: willFollow,
+              hasRequestedFollow: willRequest,
               followersCount: nextFollowers,
             };
           }
@@ -2588,20 +2699,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     // 7. Optimistic update of currentUser's followingCount
-    setCurrentUser((prev) => {
-      if (!prev) return prev;
-      const nextFollowingCount = willFollow
-        ? (prev.followingCount || 0) + 1
-        : Math.max(0, (prev.followingCount || 0) - 1);
-      const updated = {
-        ...prev,
-        followingCount: nextFollowingCount,
-      };
-      try {
-        localStorage.setItem('instavibe_user', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
+    if (willFollow || currentIsFollowing) {
+      setCurrentUser((prev) => {
+        if (!prev) return prev;
+        const nextFollowingCount = willFollow
+          ? (prev.followingCount || 0) + 1
+          : Math.max(0, (prev.followingCount || 0) - 1);
+        const updated = {
+          ...prev,
+          followingCount: nextFollowingCount,
+        };
+        try {
+          localStorage.setItem('instavibe_user', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+    }
 
     // 8. Optimistic update of notifications if follow notification exists
     setNotifications((prev) =>
@@ -2612,6 +2725,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             user: {
               ...n.user,
               isFollowing: willFollow,
+              hasRequestedFollow: willRequest,
             },
           };
         }
@@ -2632,9 +2746,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (res.ok) {
         const data = await res.json();
-        // Server returned exact targetFollowersCount and isFollowing
+        // Server returned exact targetFollowersCount, isFollowing, and hasRequestedFollow
         if (typeof data.isFollowing === 'boolean') {
           const finalFollow = data.isFollowing;
+          const finalRequested = Boolean(data.hasRequestedFollow);
           const finalCount = data.targetFollowersCount;
 
           setAvailableProfiles((prev) =>
@@ -2643,6 +2758,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 ? {
                     ...u,
                     isFollowing: finalFollow,
+                    hasRequestedFollow: finalRequested,
                     followersCount: finalCount !== undefined ? finalCount : u.followersCount,
                   }
                 : u
@@ -2654,6 +2770,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               ? {
                   ...prev,
                   isFollowing: finalFollow,
+                  hasRequestedFollow: finalRequested,
                   followersCount: finalCount !== undefined ? finalCount : prev.followersCount,
                 }
               : prev
@@ -2669,10 +2786,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const openFollowersModal = async (userId: string) => {
     try {
       const currentId = currentUser?.id || '';
+      const targetUser = availableProfiles.find((u) => u.id === userId) || (selectedUserProfile?.id === userId ? selectedUserProfile : null);
+      if (targetUser?.isPrivate && userId !== currentId && !targetUser?.isFollowing) {
+        setUserListModal({ title: 'Followers', users: [] });
+        return;
+      }
       const res = await fetch(`/api/users/${userId}/followers?currentUserId=${currentId}`);
       if (res.ok) {
         const users = await res.json();
-        setUserListModal({ title: 'Followers', users });
+        setUserListModal({ title: 'Followers', users: Array.isArray(users) ? users : [] });
       } else {
         setUserListModal({ title: 'Followers', users: [] });
       }
@@ -2684,10 +2806,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const openFollowingModal = async (userId: string) => {
     try {
       const currentId = currentUser?.id || '';
+      const targetUser = availableProfiles.find((u) => u.id === userId) || (selectedUserProfile?.id === userId ? selectedUserProfile : null);
+      if (targetUser?.isPrivate && userId !== currentId && !targetUser?.isFollowing) {
+        setUserListModal({ title: 'Following', users: [] });
+        return;
+      }
       const res = await fetch(`/api/users/${userId}/following?currentUserId=${currentId}`);
       if (res.ok) {
         const users = await res.json();
-        setUserListModal({ title: 'Following', users });
+        setUserListModal({ title: 'Following', users: Array.isArray(users) ? users : [] });
       } else {
         setUserListModal({ title: 'Following', users: [] });
       }
@@ -2741,12 +2868,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const visibleProfiles = availableProfiles.filter((u) => !blockedUserIds.includes(u.id));
   const visibleNotifications = notifications.filter((n) => !blockedUserIds.includes(n.user?.id));
 
+  // Ensure users can only see or access their own authenticated profile data, explicitly filtering out any other user accounts
+  const authenticatedSavedAccounts = useMemo(() => {
+    if (!currentUser || !currentUser.id || currentUser.id === 'guest_user') {
+      return [];
+    }
+    return savedAccounts.filter((u) => u && u.id === currentUser.id);
+  }, [currentUser, savedAccounts]);
+
   return (
     <AppContext.Provider
       value={{
         currentUser,
         isAuthenticated,
-        savedAccounts,
+        savedAccounts: authenticatedSavedAccounts,
         removeSavedAccount,
         switchProfile,
         updateProfile,
@@ -2875,6 +3010,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openFollowingModal,
         openExplorePost,
         toggleFollowUser,
+        pendingFollowRequests,
+        acceptFollowRequest,
+        declineFollowRequest,
+        fetchPendingRequests,
         celebrateAction,
         refreshData,
       }}
