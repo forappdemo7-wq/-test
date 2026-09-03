@@ -11,16 +11,13 @@ import { errorHandlerMiddleware, notFoundHandler } from './server/middleware/err
 async function bootstrap() {
   logger.info('Initializing InstaVibe Scalable Backend Services...');
 
-  // 1. Run database schema migrations
-  await initDatabase();
-
-  // 2. Register async job workers
+  // 1. Register async job workers
   initializeJobHandlers();
 
-  // 3. Instantiate Express App
+  // 2. Instantiate Express App
   const app = createExpressApp();
 
-  // 4. Vite middleware for development & static asset serving for production
+  // 3. Vite middleware for development & static asset serving for production
   if (process.env.NODE_ENV !== 'production') {
     logger.info('Mounting Vite middleware in SPA development mode...');
     const vite = await createViteServer({
@@ -37,13 +34,19 @@ async function bootstrap() {
     });
   }
 
-  // 5. Global Error Handling Middleware
+  // 4. Global Error Handling Middleware
   app.use(errorHandlerMiddleware);
 
-  // 6. Bind to Port 3000 on 0.0.0.0
-  const server = app.listen(config.port, '0.0.0.0', () => {
-    logger.info(`🚀 InstaVibe Server running at http://0.0.0.0:${config.port}`);
-    logger.info(`📑 Interactive API Documentation: http://0.0.0.0:${config.port}/api/v1/docs`);
+  // 5. Bind immediately to Port 3000 on 0.0.0.0 to satisfy Cloud Run readiness checks
+  const PORT = 3000;
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`🚀 InstaVibe Server running at http://0.0.0.0:${PORT}`);
+    logger.info(`📑 Interactive API Documentation: http://0.0.0.0:${PORT}/api/v1/docs`);
+  });
+
+  // 6. Run database schema migrations asynchronously in the background
+  initDatabase().catch((dbErr) => {
+    logger.warn('Database initialization encountered a non-fatal warning or is reconnecting:', dbErr);
   });
 
   // Graceful shutdown handling

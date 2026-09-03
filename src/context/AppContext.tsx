@@ -566,6 +566,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const safeFetchJson = async (url: string, retries = 2, delayMs = 400): Promise<any> => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          if (attempt < retries) {
+            await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)));
+            continue;
+          }
+          return null;
+        }
+        return await safeJson(res);
+      } catch {
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)));
+          continue;
+        }
+        return null;
+      }
+    }
+    return null;
+  };
+
   // Fetch real data from backend
   const refreshData = useCallback(async () => {
     try {
@@ -1684,18 +1707,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsLoadingReels(true);
     try {
       const currentId = currentUser?.id || 'anonymous';
-      const res = await fetch(`/api/reels?currentUserId=${currentId}&category=${cat}&page=1&limit=15`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setReels(data);
-          setActiveReelIndex(0);
-          setReelsPage(1);
-          setHasMoreReels(data.length >= 10);
-        }
+      const data = await safeFetchJson(`/api/reels?currentUserId=${currentId}&category=${cat}&page=1&limit=15`);
+      if (Array.isArray(data)) {
+        setReels(data);
+        setActiveReelIndex(0);
+        setReelsPage(1);
+        setHasMoreReels(data.length >= 10);
       }
-    } catch (e) {
-      console.error('Error fetching reels by category:', e);
+    } catch {
+      // Gracefully retain current reels on network interruption
     } finally {
       setIsLoadingReels(false);
     }
@@ -1711,23 +1731,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const nextPage = reelsPage + 1;
     try {
       const currentId = currentUser?.id || 'anonymous';
-      const res = await fetch(`/api/reels?currentUserId=${currentId}&category=${reelCategory}&page=${nextPage}&limit=15`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setReels((prev) => {
-            const existingIds = new Set(prev.map((r) => r.id));
-            const newItems = data.filter((r: Reel) => !existingIds.has(r.id));
-            return [...prev, ...newItems];
-          });
-          setReelsPage(nextPage);
-          setHasMoreReels(data.length >= 10);
-        } else {
-          setHasMoreReels(false);
-        }
+      const data = await safeFetchJson(`/api/reels?currentUserId=${currentId}&category=${reelCategory}&page=${nextPage}&limit=15`);
+      if (Array.isArray(data) && data.length > 0) {
+        setReels((prev) => {
+          const existingIds = new Set(prev.map((r) => r.id));
+          const newItems = data.filter((r: Reel) => !existingIds.has(r.id));
+          return [...prev, ...newItems];
+        });
+        setReelsPage(nextPage);
+        setHasMoreReels(data.length >= 10);
+      } else {
+        setHasMoreReels(false);
       }
-    } catch (e) {
-      console.error('Error loading more reels:', e);
+    } catch {
+      // Gracefully handle network interruption
     } finally {
       setIsLoadingReels(false);
     }

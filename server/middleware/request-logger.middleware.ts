@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../core/logger/logger';
 
 export function requestLoggerMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Only log API requests, skipping internal Vite development modules and static assets
+  if (!req.originalUrl.startsWith('/api')) {
+    return next();
+  }
+
   const start = Date.now();
   const { method, originalUrl, ip } = req;
 

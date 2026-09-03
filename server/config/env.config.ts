@@ -55,7 +55,7 @@ const DEFAULT_DATABASE_URL =
 
 export const config: EnvironmentConfig = {
   env: (process.env.NODE_ENV as any) || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
+  port: 3000,
   host: '0.0.0.0',
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV !== 'production',

@@ -1,4 +1,3 @@
-// server/app.ts
 import express, { Express } from 'express';
 import { requestIdMiddleware } from './middleware/request-id.middleware';
 import { requestLoggerMiddleware } from './middleware/request-logger.middleware';
@@ -8,10 +7,23 @@ import { apiRouter } from './routes';
 export function createExpressApp(): Express {
   const app = express();
 
+  // Safe Body Parser for Serverless & Standard Node
+  app.use((req, res, next) => {
+    if (typeof req.body === 'string' && req.body.trim().startsWith('{')) {
+      try {
+        req.body = JSON.parse(req.body);
+      } catch {
+        // pass through to standard body parsers
+      }
+    }
+    next();
+  });
+
+  // Core Parsers & Middlewares
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-  // Security headers
+  // Security Headers Middleware (Production-hardened, iframe-compatible)
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -21,17 +33,13 @@ export function createExpressApp(): Express {
     next();
   });
 
+  // Tracing and Structured Logging
   app.use(requestIdMiddleware);
   app.use(requestLoggerMiddleware);
 
-  // Mount API router
+  // Mount API Router on /api and root fallback
   app.use('/api', apiRouter);
-
-  // 404 handler
-  app.use(notFoundHandler);
-
-  // Error handler (must be last)
-  app.use(errorHandlerMiddleware);
+  app.use('/', apiRouter);
 
   return app;
 }
