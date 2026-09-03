@@ -46,7 +46,10 @@ const StoryRingComponent: React.FC<StoryRingProps> = ({
       return 'from-rose-500 via-red-600 to-pink-600 animate-pulse';
     }
     if (isCloseFriend) {
-      return 'from-emerald-400 via-green-500 to-teal-500';
+      if (hasUnseen) {
+        return 'from-emerald-400 via-green-500 to-emerald-500 shadow-sm';
+      }
+      return 'from-emerald-500/40 to-green-500/40 dark:from-emerald-700/40 dark:to-green-800/40';
     }
     if (hasUnseen) {
       return 'from-amber-400 via-rose-500 to-fuchsia-600';

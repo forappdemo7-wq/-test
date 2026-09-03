@@ -18,6 +18,9 @@ import {
   Link,
   MapPin,
   Smile,
+  Disc,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { Post, Comment } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -25,6 +28,7 @@ import { DoubleTapHeart } from './DoubleTapHeart';
 import { StoryRing } from '../stories/StoryRing';
 import { ProgressiveImage } from './ProgressiveImage';
 import { FeedVideoPlayer } from './FeedVideoPlayer';
+import { POPULAR_SOUNDTRACKS } from '../../data/trendingAudio';
 
 interface PostCardProps {
   post: Post;
@@ -57,6 +61,38 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [copiedToast, setCopiedToast] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const postAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePostAudio = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!post.musicTrack) return;
+
+    if (isPlayingAudio) {
+      if (postAudioRef.current) postAudioRef.current.pause();
+      setIsPlayingAudio(false);
+      return;
+    }
+
+    const matchingTrack = POPULAR_SOUNDTRACKS.find(
+      (t) =>
+        t.title.toLowerCase() === post.musicTrack?.title.toLowerCase() ||
+        post.musicTrack?.title.toLowerCase().includes(t.title.toLowerCase())
+    );
+
+    const soundUrl =
+      matchingTrack?.audioUrl ||
+      'https://actions.google.com/sounds/v1/musical_instruments/funky_synth_bass.ogg';
+
+    if (postAudioRef.current) postAudioRef.current.pause();
+
+    const audio = new Audio(soundUrl);
+    audio.volume = 0.6;
+    audio.play().catch((err) => console.warn('Audio playback error:', err));
+    audio.onended = () => setIsPlayingAudio(false);
+    postAudioRef.current = audio;
+    setIsPlayingAudio(true);
+  };
 
   const lastTapRef = useRef<number>(0);
 
@@ -130,6 +166,14 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
               avatar={post.author.avatar}
               username={post.author.username}
               hasUnseen={authorStoryIndex >= 0 ? stories[authorStoryIndex].hasUnseen : false}
+              isCloseFriend={
+                authorStoryIndex >= 0
+                  ? Boolean(
+                      stories[authorStoryIndex].hasCloseFriends ||
+                        stories[authorStoryIndex].items.some((it) => it.isCloseFriends)
+                    )
+                  : false
+              }
               size="sm"
             />
           </div>
@@ -408,14 +452,30 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
           {post.likesCount.toLocaleString()} {post.likesCount === 1 ? 'like' : 'likes'}
         </div>
 
-        {/* Music Track (if attached) */}
+        {/* Music Track (if attached with Instagram Vinyl Sticker & Play toggle) */}
         {post.musicTrack && (
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            <Music size={13} className="animate-pulse text-pink-500" />
-            <span className="font-medium">
+          <button
+            type="button"
+            onClick={togglePostAudio}
+            className={`flex items-center gap-2 text-xs px-2.5 py-1 rounded-full border transition-all mt-1 cursor-pointer select-none max-w-fit ${
+              isPlayingAudio
+                ? 'bg-pink-500/10 border-pink-500/30 text-pink-600 dark:text-pink-400 font-semibold'
+                : 'bg-neutral-100 dark:bg-neutral-800/80 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+            }`}
+          >
+            <Disc
+              size={14}
+              className={`text-pink-500 ${isPlayingAudio ? 'animate-spin' : ''}`}
+            />
+            <span className="truncate max-w-[220px]">
               {post.musicTrack.title} • {post.musicTrack.artist}
             </span>
-          </div>
+            {isPlayingAudio ? (
+              <Volume2 size={13} className="text-pink-500 animate-pulse flex-shrink-0" />
+            ) : (
+              <VolumeX size={13} className="text-neutral-400 flex-shrink-0" />
+            )}
+          </button>
         )}
 
         {/* Caption */}

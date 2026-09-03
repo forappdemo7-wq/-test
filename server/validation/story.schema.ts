@@ -8,6 +8,21 @@ export const CreateStorySchema = z.object({
   filter: z.string().optional().default('normal'),
   link: z.string().optional().default(''),
   isCloseFriends: z.boolean().optional().default(false),
+  poll: z.any().optional(),
+  question: z.any().optional(),
+  music: z.any().optional(),
+});
+
+export const VotePollSchema = z.object({
+  userId: z.string().optional(),
+  optionId: z.string().min(1, 'Option ID is required'),
+});
+
+export const SubmitQuestionSchema = z.object({
+  userId: z.string().optional(),
+  username: z.string().optional(),
+  avatar: z.string().optional(),
+  response: z.string().min(1, 'Response text is required').max(500),
 });
 
 export const CreateHighlightSchema = z.object({

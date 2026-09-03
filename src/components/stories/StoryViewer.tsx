@@ -19,6 +19,10 @@ import {
   Bookmark,
   Music,
   Sparkles,
+  Star,
+  BarChart2,
+  HelpCircle,
+  MessageCircle,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getDeterministicChatId } from '../../lib/firestoreChat';
@@ -77,6 +81,8 @@ export const StoryViewer: React.FC = () => {
     deleteStory,
     setSelectedUserProfile,
     setActiveSharePost,
+    voteStoryPoll,
+    submitStoryQuestion,
   } = useApp();
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
@@ -92,6 +98,11 @@ export const StoryViewer: React.FC = () => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showViewersDrawer, setShowViewersDrawer] = useState(false);
   const [showHighlightModal, setShowHighlightModal] = useState(false);
+
+  // Question sticker interaction states
+  const [questionInput, setQuestionInput] = useState('');
+  const [questionSubmitted, setQuestionSubmitted] = useState(false);
+  const [showQuestionResponsesDrawer, setShowQuestionResponsesDrawer] = useState(false);
 
   const [viewersList, setViewersList] = useState<StoryViewerUser[]>([]);
   const [loadingViewers, setLoadingViewers] = useState(false);
@@ -137,7 +148,17 @@ export const StoryViewer: React.FC = () => {
     setShowMoreMenu(false);
     setShowViewersDrawer(false);
     setShowHighlightModal(false);
+    setQuestionSubmitted(false);
+    setQuestionInput('');
+    setShowQuestionResponsesDrawer(false);
   }, [activeStoryGroupIndex]);
+
+  // Reset question states when slide changes
+  useEffect(() => {
+    setQuestionSubmitted(false);
+    setQuestionInput('');
+    setShowQuestionResponsesDrawer(false);
+  }, [currentSlideIndex]);
 
   // Mark story as seen
   const currentGroupId = currentGroup?.userId;
@@ -715,6 +736,12 @@ export const StoryViewer: React.FC = () => {
                   {currentGroup.isVerified && (
                     <span className="text-sky-400 text-xs">●</span>
                   )}
+                  {currentSlide.isCloseFriends && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[10px] font-bold shadow-sm">
+                      <Star size={9} className="fill-white" />
+                      <span>Close Friends</span>
+                    </span>
+                  )}
                   <span className="text-white/60 text-xs font-bold">•</span>
                   <span className="text-white/75 text-xs font-normal">
                     {formatStoryTime(currentSlide.timestamp || currentSlide.rawTimestamp)}
@@ -723,7 +750,13 @@ export const StoryViewer: React.FC = () => {
                 {/* Audio track info if video or track present */}
                 <div className="flex items-center gap-1 text-[10px] text-white/80 mt-0.5">
                   <Music size={10} className="text-white/70" />
-                  <span>{isVideoStory ? 'Video audio' : 'Original audio'}</span>
+                  <span>
+                    {currentSlide.music
+                      ? `${currentSlide.music.title} • ${currentSlide.music.artist}`
+                      : isVideoStory
+                      ? 'Video audio'
+                      : 'Original audio'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -848,18 +881,190 @@ export const StoryViewer: React.FC = () => {
           </div>
         </div>
 
-        {/* Story Caption (if any) */}
-        {currentSlide.caption && (
-          <div
-            className={`relative z-20 px-4 py-2 my-auto transition-opacity duration-200 ${
-              isHolding ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            }`}
-          >
-            <div className="bg-black/45 backdrop-blur-md rounded-2xl px-4 py-2.5 inline-block text-white text-xs sm:text-sm font-medium shadow-lg border border-white/15 max-w-full">
+        {/* INTERACTIVE STICKERS OVERLAY (Polls, Questions, Music, Captions) */}
+        <div
+          className={`relative z-20 px-4 py-2 my-auto flex flex-col items-center gap-3 transition-opacity duration-200 ${
+            isHolding ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          {/* Story Caption (if any) */}
+          {currentSlide.caption && (
+            <div className="bg-black/55 backdrop-blur-md rounded-2xl px-4 py-2 text-white text-xs sm:text-sm font-medium shadow-lg border border-white/15 max-w-full text-center">
               {currentSlide.caption}
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Interactive Poll Sticker */}
+          {currentSlide.poll && (
+            <div
+              data-interactive="true"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[280px] bg-neutral-900/90 backdrop-blur-xl border border-white/20 rounded-3xl p-4 shadow-2xl space-y-3 select-none text-white animate-scale-up"
+            >
+              <div className="flex items-center justify-between text-xs text-white/80 font-semibold">
+                <span className="flex items-center gap-1.5">
+                  <BarChart2 size={15} className="text-blue-400" />
+                  <span>Poll</span>
+                </span>
+                <span className="text-[10px] text-white/60">
+                  {currentSlide.poll.totalVotes || 0} votes
+                </span>
+              </div>
+
+              <h4 className="text-sm sm:text-base font-bold text-center text-white drop-shadow">
+                {currentSlide.poll.question}
+              </h4>
+
+              <div className="space-y-2">
+                {currentSlide.poll.options.map((option) => {
+                  const totalVotes = currentSlide.poll!.totalVotes || 0;
+                  const votes = option.votesCount || 0;
+                  const percentage = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+                  const hasVoted = Boolean(currentSlide.poll!.userVotedOptionId);
+                  const isUserSelection = currentSlide.poll!.userVotedOptionId === option.id;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      disabled={hasVoted}
+                      onClick={() => voteStoryPoll(currentSlide.id, option.id)}
+                      className={`relative w-full h-11 rounded-2xl overflow-hidden border transition-all cursor-pointer text-left flex items-center justify-between px-4 ${
+                        hasVoted
+                          ? isUserSelection
+                            ? 'border-blue-400 bg-blue-500/20'
+                            : 'border-white/15 bg-white/5'
+                          : 'border-white/25 bg-white/15 hover:bg-white/25 hover:border-white/40 active:scale-98'
+                      }`}
+                    >
+                      {/* Animated Progress Bar */}
+                      {hasVoted && (
+                        <div
+                          className={`absolute inset-y-0 left-0 transition-all duration-700 ease-out ${
+                            isUserSelection ? 'bg-blue-500/40' : 'bg-white/15'
+                          }`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      )}
+
+                      <div className="relative z-10 flex items-center gap-2 font-bold text-xs sm:text-sm">
+                        <span>{option.text}</span>
+                        {isUserSelection && <CheckCircle2 size={15} className="text-blue-400" />}
+                      </div>
+
+                      {hasVoted && (
+                        <span className="relative z-10 font-extrabold text-xs sm:text-sm text-white/90">
+                          {percentage}%
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Interactive Question Box Sticker */}
+          {currentSlide.question && (
+            <div
+              data-interactive="true"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[280px] bg-gradient-to-tr from-purple-700 via-indigo-600 to-pink-600 rounded-3xl p-4 shadow-2xl space-y-3 text-white select-none border border-white/20 animate-scale-up"
+            >
+              <div className="flex items-center justify-between text-xs font-semibold text-white/90">
+                <span className="flex items-center gap-1.5">
+                  <HelpCircle size={15} />
+                  <span>Ask a Question</span>
+                </span>
+                {isOwnStory && (
+                  <button
+                    type="button"
+                    onClick={() => setShowQuestionResponsesDrawer(true)}
+                    className="text-[10px] bg-white/20 hover:bg-white/30 px-2.5 py-0.5 rounded-full cursor-pointer transition-colors font-bold"
+                  >
+                    {currentSlide.question.responses?.length || 0} responses
+                  </button>
+                )}
+              </div>
+
+              <h4 className="text-sm sm:text-base font-extrabold text-center drop-shadow leading-snug">
+                {currentSlide.question.prompt}
+              </h4>
+
+              {!isOwnStory ? (
+                <div className="space-y-2">
+                  {questionSubmitted ? (
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-3 text-center text-xs font-bold text-white flex items-center justify-center gap-1.5">
+                      <CheckCircle2 size={16} className="text-emerald-300" />
+                      <span>Response sent!</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-md rounded-2xl p-1.5 border border-white/20">
+                      <input
+                        type="text"
+                        value={questionInput}
+                        onChange={(e) => setQuestionInput(e.target.value)}
+                        placeholder="Type something..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && questionInput.trim()) {
+                            submitStoryQuestion(currentSlide.id, questionInput.trim());
+                            setQuestionSubmitted(true);
+                            setQuestionInput('');
+                          }
+                        }}
+                        className="w-full bg-transparent px-2.5 py-1 text-xs text-white placeholder-white/60 outline-none"
+                      />
+                      <button
+                        type="button"
+                        disabled={!questionInput.trim()}
+                        onClick={() => {
+                          if (!questionInput.trim()) return;
+                          submitStoryQuestion(currentSlide.id, questionInput.trim());
+                          setQuestionSubmitted(true);
+                          setQuestionInput('');
+                        }}
+                        className="p-2 rounded-xl bg-white text-purple-700 disabled:opacity-40 font-bold hover:bg-white/90 active:scale-90 transition-all cursor-pointer flex-shrink-0"
+                      >
+                        <Send size={13} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowQuestionResponsesDrawer(true)}
+                  className="w-full bg-black/30 hover:bg-black/40 rounded-2xl p-2.5 text-center text-[11px] text-white/90 font-semibold border border-white/10 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <MessageCircle size={14} />
+                  <span>
+                    {currentSlide.question.responses?.length
+                      ? `View ${currentSlide.question.responses.length} responses`
+                      : 'No responses yet'}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Interactive Music Overlay Sticker */}
+          {currentSlide.music && (
+            <div
+              data-interactive="true"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-2 bg-black/65 backdrop-blur-xl border border-white/20 rounded-full py-1.5 px-3.5 text-white shadow-xl text-xs font-semibold select-none animate-scale-up"
+            >
+              <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 flex items-center justify-center text-white">
+                <Music size={11} className="animate-pulse" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold truncate max-w-[120px]">{currentSlide.music.title}</span>
+                <span className="text-white/60 text-[11px]">•</span>
+                <span className="text-white/80 text-[11px] truncate max-w-[100px]">{currentSlide.music.artist}</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* BOTTOM OVERLAY: Interactive Reply / Own Story Controls */}
         <div
@@ -1047,6 +1252,81 @@ export const StoryViewer: React.FC = () => {
             </form>
           )}
         </div>
+
+        {/* Question Responses Slide-Up Drawer (for story author) */}
+        {showQuestionResponsesDrawer && currentSlide?.question && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute inset-x-0 bottom-0 top-1/4 bg-neutral-900/98 backdrop-blur-2xl rounded-t-3xl z-40 border-t border-white/15 p-4 flex flex-col justify-between animate-slide-up shadow-2xl"
+          >
+            <div>
+              <div className="w-10 h-1 bg-white/30 rounded-full mx-auto mb-3" />
+
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <HelpCircle size={17} className="text-purple-400" />
+                  <span>Question Responses</span>
+                  <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-0.5 rounded-full">
+                    {currentSlide.question.responses?.length || 0}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setShowQuestionResponsesDrawer(false)}
+                  className="p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="mb-3 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-200">
+                Prompt: <span className="font-semibold text-white">"{currentSlide.question.prompt}"</span>
+              </div>
+
+              <div className="overflow-y-auto max-h-[320px] space-y-2.5 pr-1">
+                {!currentSlide.question.responses || currentSlide.question.responses.length === 0 ? (
+                  <div className="py-8 text-center text-white/50 text-xs">
+                    No responses yet. When viewers reply to your question sticker, they will appear here.
+                  </div>
+                ) : (
+                  currentSlide.question.responses.map((resp) => (
+                    <div
+                      key={resp.id}
+                      className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={resp.userAvatar}
+                            alt={resp.username}
+                            referrerPolicy="no-referrer"
+                            className="w-6 h-6 rounded-full object-cover border border-white/20"
+                          />
+                          <span className="text-xs font-bold text-white">{resp.username}</span>
+                        </div>
+                        <span className="text-[10px] text-white/50">
+                          {formatStoryTime(resp.timestamp)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/90 pl-8 font-medium leading-relaxed">
+                        {resp.response}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-white/10 pt-3">
+              <button
+                onClick={() => setShowQuestionResponsesDrawer(false)}
+                className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Viewers & Insights Slide-Up Drawer (for own story) */}
         {showViewersDrawer && (

@@ -42,6 +42,19 @@ export class StoryService {
         else timeAgo = `${Math.floor(diffSecs / 604800)}w`;
       }
 
+      let poll = s.poll ? (typeof s.poll === 'string' ? JSON.parse(s.poll) : s.poll) : undefined;
+      let question = s.question ? (typeof s.question === 'string' ? JSON.parse(s.question) : s.question) : undefined;
+      let music = s.music ? (typeof s.music === 'string' ? JSON.parse(s.music) : s.music) : undefined;
+
+      if (poll && Array.isArray(poll.options)) {
+        // Calculate userVotedOptionId if current user voted
+        const votedOption = poll.options.find((opt: any) =>
+          Array.isArray(opt.voterUserIds) && opt.voterUserIds.includes(currentUserId)
+        );
+        poll.userVotedOptionId = votedOption ? votedOption.id : undefined;
+        poll.totalVotes = poll.options.reduce((acc: number, o: any) => acc + (o.votesCount || 0), 0);
+      }
+
       groupedMap[s.user_id].items.push({
         id: s.id,
         mediaUrl: s.media_url,
@@ -56,6 +69,9 @@ export class StoryService {
         viewsCount: s.viewsCount || 0,
         likesCount: s.likesCount || 0,
         link: s.link || '',
+        poll,
+        question,
+        music,
       });
     }
 
@@ -70,6 +86,9 @@ export class StoryService {
     filter?: string;
     link?: string;
     isCloseFriends?: boolean;
+    poll?: any;
+    question?: any;
+    music?: any;
   }) {
     let finalMediaUrl = data.mediaUrl;
     if (data.mediaUrl && data.mediaUrl.startsWith('data:image')) {
@@ -87,6 +106,9 @@ export class StoryService {
       filter: data.filter || 'normal',
       link: data.link || '',
       isCloseFriends: Boolean(data.isCloseFriends),
+      poll: data.poll,
+      question: data.question,
+      music: data.music,
     });
 
     return {
@@ -97,6 +119,10 @@ export class StoryService {
       caption: data.caption || '',
       filter: data.filter || 'normal',
       link: data.link || '',
+      isCloseFriends: Boolean(data.isCloseFriends),
+      poll: data.poll,
+      question: data.question,
+      music: data.music,
       timestamp: 'Just now',
       rawTimestamp: new Date().toISOString(),
       seen: false,
@@ -104,6 +130,20 @@ export class StoryService {
       viewsCount: 0,
       likesCount: 0,
     };
+  }
+
+  async votePoll(storyId: string, userId: string, optionId: string) {
+    const updatedPoll = await storyRepository.votePoll(storyId, userId, optionId);
+    return { success: true, poll: updatedPoll };
+  }
+
+  async submitQuestionResponse(
+    storyId: string,
+    user: { id: string; username: string; avatar: string },
+    response: string
+  ) {
+    const updatedQuestion = await storyRepository.submitQuestionResponse(storyId, user, response);
+    return { success: true, question: updatedQuestion };
   }
 
   async recordView(storyId: string, userId: string) {

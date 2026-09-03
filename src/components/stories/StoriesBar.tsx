@@ -6,6 +6,11 @@ import { StoryRing } from './StoryRing';
 export const StoriesBar: React.FC = () => {
   const { stories, openStoryViewer, currentUser, setIsCreateOpen } = useApp();
 
+  const myGroup = stories.find((s) => currentUser?.id && s.userId === currentUser.id);
+  const myHasStories = Boolean(myGroup && myGroup.items.length > 0);
+  const myHasUnseen = myGroup ? myGroup.items.some((it) => !it.seen) : false;
+  const myIsCloseFriends = myGroup ? myGroup.items.some((it) => it.isCloseFriends) : false;
+
   return (
     <div className="w-full bg-white dark:bg-neutral-900 sm:rounded-3xl border-b sm:border border-neutral-200/80 dark:border-neutral-800/80 py-4 px-3 sm:px-5 mb-4 shadow-soft transition-colors select-none">
       <div className="flex items-center gap-4 overflow-x-auto no-scrollbar scroll-smooth">
@@ -15,7 +20,8 @@ export const StoriesBar: React.FC = () => {
             <StoryRing
               avatar={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
               username={currentUser?.username || 'Your story'}
-              hasUnseen={false}
+              hasUnseen={myHasStories ? myHasUnseen : false}
+              isCloseFriend={myHasStories ? myIsCloseFriends : false}
               size="md"
               onClick={() => {
                 const myIndex = stories.findIndex((s) => currentUser?.id && s.userId === currentUser.id);
@@ -47,6 +53,7 @@ export const StoriesBar: React.FC = () => {
           .filter((s) => s.userId !== currentUser?.id)
           .map((group) => {
             const realIndex = stories.findIndex((s) => s.userId === group.userId);
+            const isGroupCloseFriends = Boolean(group.hasCloseFriends || group.items.some((it) => it.isCloseFriends));
             return (
               <div
                 key={group.userId}
@@ -57,6 +64,7 @@ export const StoriesBar: React.FC = () => {
                   avatar={group.avatar}
                   username={group.username}
                   hasUnseen={group.hasUnseen}
+                  isCloseFriend={isGroupCloseFriends}
                   size="md"
                 />
                 <span className="text-[11px] text-neutral-800 dark:text-neutral-200 font-medium mt-1.5 truncate max-w-[72px] text-center group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">

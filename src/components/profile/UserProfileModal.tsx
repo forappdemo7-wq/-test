@@ -161,6 +161,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClos
                 avatar={user.avatar}
                 username={user.username}
                 hasUnseen={!isPrivateAccount && userStoryIndex >= 0 ? stories[userStoryIndex].hasUnseen : false}
+                isCloseFriend={
+                  !isPrivateAccount && userStoryIndex >= 0
+                    ? Boolean(
+                        stories[userStoryIndex].hasCloseFriends ||
+                          stories[userStoryIndex].items.some((it) => it.isCloseFriends)
+                      )
+                    : false
+                }
                 size="lg"
                 onClick={() => {
                   if (isPrivateAccount) {

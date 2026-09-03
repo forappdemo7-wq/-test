@@ -134,6 +134,14 @@ export const ProfileView: React.FC = () => {
               avatar={currentUser.avatar}
               username={currentUser.username}
               hasUnseen={myStoryIndex >= 0 ? stories[myStoryIndex].hasUnseen : false}
+              isCloseFriend={
+                myStoryIndex >= 0
+                  ? Boolean(
+                      stories[myStoryIndex].hasCloseFriends ||
+                        stories[myStoryIndex].items.some((it) => it.isCloseFriends)
+                    )
+                  : false
+              }
               size="lg"
               onClick={() => {
                 if (myStoryIndex >= 0 && stories[myStoryIndex].items.length > 0) {

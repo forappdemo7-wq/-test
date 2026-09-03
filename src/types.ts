@@ -117,6 +117,70 @@ export interface SuspiciousLoginAlert {
   isResolved: boolean;
 }
 
+export interface StoryPollOption {
+  id: string;
+  text: string;
+  votesCount: number;
+  voterUserIds?: string[];
+}
+
+export interface StoryPollSticker {
+  id: string;
+  question: string;
+  options: StoryPollOption[];
+  userVotedOptionId?: string;
+  totalVotes?: number;
+}
+
+export interface StoryQuestionResponse {
+  id: string;
+  userId: string;
+  username: string;
+  userAvatar: string;
+  response: string;
+  timestamp: string;
+}
+
+export interface StoryQuestionSticker {
+  id: string;
+  prompt: string;
+  color?: string;
+  responses?: StoryQuestionResponse[];
+}
+
+export interface AudioTrack {
+  id: string;
+  title: string;
+  artist: string;
+  duration?: number;
+  audioUrl?: string;
+  coverUrl?: string;
+  category?: string;
+  useCount?: string;
+  isTrending?: boolean;
+}
+
+export interface PostDraft {
+  id: string;
+  userId: string;
+  createType: 'post' | 'reel' | 'story';
+  media: PostMedia[];
+  caption: string;
+  location?: string;
+  audioTrack?: AudioTrack;
+  scheduledAt?: string; // ISO string if scheduled
+  savedAt: string;
+}
+
+export interface StoryMusicSticker {
+  id: string;
+  title: string;
+  artist: string;
+  coverUrl?: string;
+  audioUrl?: string;
+  duration?: number;
+}
+
 export interface StoryItem {
   id: string;
   mediaUrl: string;
@@ -131,6 +195,9 @@ export interface StoryItem {
   viewsCount?: number;
   likesCount?: number;
   link?: string;
+  poll?: StoryPollSticker;
+  question?: StoryQuestionSticker;
+  music?: StoryMusicSticker;
 }
 
 export interface StoryGroup {

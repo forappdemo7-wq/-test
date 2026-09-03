@@ -118,6 +118,9 @@ export async function runDatabaseMigrations(): Promise<void> {
     );
 
     ALTER TABLE stories ADD COLUMN IF NOT EXISTS is_close_friends BOOLEAN DEFAULT false;
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS poll JSONB DEFAULT NULL;
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS question JSONB DEFAULT NULL;
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS music JSONB DEFAULT NULL;
     ALTER TABLE comments ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT true;
   `);
 

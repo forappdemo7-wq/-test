@@ -224,9 +224,17 @@ export async function initDatabase() {
         caption TEXT DEFAULT '',
         filter VARCHAR(32) DEFAULT 'normal',
         link TEXT DEFAULT '',
+        is_close_friends BOOLEAN DEFAULT FALSE,
+        poll JSONB DEFAULT NULL,
+        question JSONB DEFAULT NULL,
+        music JSONB DEFAULT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
+    await query(`ALTER TABLE stories ADD COLUMN IF NOT EXISTS is_close_friends BOOLEAN DEFAULT FALSE;`);
+    await query(`ALTER TABLE stories ADD COLUMN IF NOT EXISTS poll JSONB DEFAULT NULL;`);
+    await query(`ALTER TABLE stories ADD COLUMN IF NOT EXISTS question JSONB DEFAULT NULL;`);
+    await query(`ALTER TABLE stories ADD COLUMN IF NOT EXISTS music JSONB DEFAULT NULL;`);
 
     // 9. Create Story Views Table
     await query(`

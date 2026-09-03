@@ -26,6 +26,8 @@ import {
   Search,
   Pin,
   PinOff,
+  Lock,
+  ChevronUp,
 } from 'lucide-react';
 import {
   ChatThread,
@@ -92,14 +94,36 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
   const [isStickerModalOpen, setIsStickerModalOpen] = useState(false);
   const [isVoiceRecordingOpen, setIsVoiceRecordingOpen] = useState(false);
 
+  // Hold to Record State
+  const [isHoldingToRecord, setIsHoldingToRecord] = useState(false);
+  const [holdRecordingSeconds, setHoldRecordingSeconds] = useState(0);
+  const [holdSlideDistance, setHoldSlideDistance] = useState(0); // negative = left (cancel)
+  const [holdLockDistance, setHoldLockDistance] = useState(0); // positive = up (lock)
+  const [isCancelTargeted, setIsCancelTargeted] = useState(false);
+  const [isLockTargeted, setIsLockTargeted] = useState(false);
+  const [liveVolumeLevels, setLiveVolumeLevels] = useState<number[]>([20, 35, 50, 70, 45, 30, 60, 80, 55, 35, 20]);
+
+  const holdAudioRecorderRef = useRef<MediaRecorder | null>(null);
+  const holdAudioChunksRef = useRef<Blob[]>([]);
+  const holdAudioStreamRef = useRef<MediaStream | null>(null);
+  const holdTimerIntervalRef = useRef<any>(null);
+  const holdAudioContextRef = useRef<AudioContext | null>(null);
+  const holdAnalyserRef = useRef<AnalyserNode | null>(null);
+  const holdAnimFrameRef = useRef<number | null>(null);
+  const holdPointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const holdStartTimeRef = useRef<number>(0);
+
   // Fullscreen Media Lightbox
   const [lightboxMedia, setLightboxMedia] = useState<{
     url: string;
     type: 'image' | 'video' | 'gif';
   } | null>(null);
 
-  // Vanish Mode state
+  // Vanish Mode state & Swipe up gesture
   const [isVanishMode, setIsVanishMode] = useState(false);
+  const [swipeUpDistance, setSwipeUpDistance] = useState(0);
+  const [isSwipeUpActive, setIsSwipeUpActive] = useState(false);
+  const swipeTouchStartYRef = useRef<number | null>(null);
 
   // Chat Theme & Modals State
   const [activeTheme, setActiveTheme] = useState<ChatTheme | undefined>(thread.theme);
@@ -113,6 +137,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
   
   const canMessage = !isBlocked && thread.participant.isFollowing && thread.participant.isFollowedBy;
 
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -150,6 +175,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
         clearTimeout(typingTimeoutRef.current);
       }
       setTypingStatusInFirestore(thread.id, currentUserId, false);
+      cleanupHoldMedia();
     };
   }, [thread.id, currentUser?.id]);
 
@@ -173,6 +199,220 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOtherTyping]);
 
+  // Handle Safe Exit: Clear vanish messages when leaving thread if vanish mode was activated
+  const handleSafeBack = () => {
+    if (isVanishMode || messages.some((m) => m.isVanish)) {
+      // Disappear vanish messages from local thread
+      setMessages((prev) => prev.filter((m) => !m.isVanish));
+    }
+    onBack();
+  };
+
+  // Toggle Vanish Mode
+  const toggleVanishMode = (forceState?: boolean) => {
+    const nextState = typeof forceState === 'boolean' ? forceState : !isVanishMode;
+    setIsVanishMode(nextState);
+    if (!nextState) {
+      // Disappear vanish messages when turning off vanish mode
+      setMessages((prev) => prev.filter((m) => !m.isVanish));
+      setActionToast('Vanish mode turned off • Disappearing messages cleared');
+    } else {
+      setActionToast('Vanish mode turned on 👻');
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Swipe-Up to Toggle Vanish Mode Gesture
+  // -------------------------------------------------------------
+  const handleTouchStartScroll = (e: React.TouchEvent) => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 10;
+    if (isAtBottom) {
+      swipeTouchStartYRef.current = e.touches[0].clientY;
+      setIsSwipeUpActive(true);
+    }
+  };
+
+  const handleTouchMoveScroll = (e: React.TouchEvent) => {
+    if (!isSwipeUpActive || swipeTouchStartYRef.current === null) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = swipeTouchStartYRef.current - currentY; // positive when dragging up
+
+    if (deltaY > 0) {
+      // Limit pull distance to max 120px with resistance
+      const clamped = Math.min(120, deltaY);
+      setSwipeUpDistance(clamped);
+    } else {
+      setSwipeUpDistance(0);
+    }
+  };
+
+  const handleTouchEndScroll = () => {
+    if (isSwipeUpActive) {
+      if (swipeUpDistance >= 70) {
+        toggleVanishMode();
+      }
+      setIsSwipeUpActive(false);
+      setSwipeUpDistance(0);
+      swipeTouchStartYRef.current = null;
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Hold-to-Record Voice Note Logic
+  // -------------------------------------------------------------
+  const cleanupHoldMedia = () => {
+    if (holdTimerIntervalRef.current) clearInterval(holdTimerIntervalRef.current);
+    if (holdAnimFrameRef.current) cancelAnimationFrame(holdAnimFrameRef.current);
+    if (holdAudioContextRef.current) {
+      try {
+        holdAudioContextRef.current.close();
+      } catch {}
+    }
+    if (holdAudioStreamRef.current) {
+      holdAudioStreamRef.current.getTracks().forEach((t) => t.stop());
+      holdAudioStreamRef.current = null;
+    }
+    holdAudioRecorderRef.current = null;
+  };
+
+  const startHoldRecording = async (clientX: number, clientY: number) => {
+    if (isBlocked || !canMessage) return;
+    holdPointerStartRef.current = { x: clientX, y: clientY };
+    holdStartTimeRef.current = Date.now();
+    holdAudioChunksRef.current = [];
+    setHoldRecordingSeconds(0);
+    setHoldSlideDistance(0);
+    setHoldLockDistance(0);
+    setIsCancelTargeted(false);
+    setIsLockTargeted(false);
+    setIsHoldingToRecord(true);
+
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        throw new Error('Microphone not supported');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      holdAudioStreamRef.current = stream;
+
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        holdAudioContextRef.current = ctx;
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 64;
+        source.connect(analyser);
+        holdAnalyserRef.current = analyser;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const updateWaveform = () => {
+          if (holdAnalyserRef.current) {
+            holdAnalyserRef.current.getByteFrequencyData(dataArray);
+            const sampled: number[] = [];
+            const step = Math.max(1, Math.floor(dataArray.length / 12));
+            for (let i = 0; i < 12; i++) {
+              const val = dataArray[i * step] || 20;
+              const percent = Math.min(100, Math.max(15, Math.round((val / 255) * 100)));
+              sampled.push(percent);
+            }
+            setLiveVolumeLevels(sampled);
+          }
+          holdAnimFrameRef.current = requestAnimationFrame(updateWaveform);
+        };
+        updateWaveform();
+      }
+
+      let mimeType = 'audio/webm';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        }
+      }
+
+      const recorder = new MediaRecorder(stream, { mimeType });
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          holdAudioChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.start(100);
+      holdAudioRecorderRef.current = recorder;
+
+      holdTimerIntervalRef.current = setInterval(() => {
+        setHoldRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.warn('Microphone error in hold recording:', err);
+      // Fallback timer
+      holdTimerIntervalRef.current = setInterval(() => {
+        setHoldRecordingSeconds((prev) => prev + 1);
+        setLiveVolumeLevels(Array.from({ length: 12 }, () => Math.floor(Math.random() * 60) + 20));
+      }, 1000);
+    }
+  };
+
+  const updateHoldPointer = (clientX: number, clientY: number) => {
+    if (!isHoldingToRecord || !holdPointerStartRef.current) return;
+    const deltaX = clientX - holdPointerStartRef.current.x;
+    const deltaY = holdPointerStartRef.current.y - clientY; // positive when dragging up
+
+    setHoldSlideDistance(deltaX);
+    setHoldLockDistance(deltaY);
+
+    const cancelTarget = deltaX < -70;
+    const lockTarget = deltaY > 60;
+
+    setIsCancelTargeted(cancelTarget);
+    setIsLockTargeted(lockTarget);
+  };
+
+  const finishHoldRecording = () => {
+    if (!isHoldingToRecord) return;
+    const elapsedSecs = Math.max(1, holdRecordingSeconds);
+    const wasCancel = isCancelTargeted;
+    const wasLock = isLockTargeted;
+
+    setIsHoldingToRecord(false);
+    setHoldSlideDistance(0);
+    setHoldLockDistance(0);
+    setIsCancelTargeted(false);
+    setIsLockTargeted(false);
+
+    if (wasLock) {
+      // Lock hands-free: open standard VoiceRecorderBar
+      cleanupHoldMedia();
+      setIsVoiceRecordingOpen(true);
+      return;
+    }
+
+    if (wasCancel) {
+      // Discard
+      cleanupHoldMedia();
+      setActionToast('Voice recording discarded');
+      return;
+    }
+
+    // Stop and send audio note
+    if (holdAudioRecorderRef.current && holdAudioRecorderRef.current.state !== 'inactive') {
+      holdAudioRecorderRef.current.stop();
+      setTimeout(() => {
+        const fullBlob = new Blob(holdAudioChunksRef.current, { type: 'audio/webm' });
+        handleSendVoiceNote(fullBlob, elapsedSecs);
+        cleanupHoldMedia();
+      }, 150);
+    } else {
+      const dummyBlob = new Blob(['synthetic-audio'], { type: 'audio/webm' });
+      handleSendVoiceNote(dummyBlob, elapsedSecs);
+      cleanupHoldMedia();
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
 
@@ -190,6 +430,49 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
         setTypingStatusInFirestore(thread.id, currentUser.id, false);
       }
     }, 2000);
+  };
+
+  // Simulate realistic companion response in demo mode to showcase typing indicators & read receipts
+  const triggerCompanionReplySimulation = (userSentText: string) => {
+    if (!thread.participant || thread.participant.id === currentUser?.id) return;
+    
+    // 1. After 1.2 seconds, other participant starts typing
+    setTimeout(() => {
+      setIsOtherTyping(true);
+
+      // 2. Mark sender's message as seen
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.senderId === currentUser?.id ? { ...m, isSeen: true, status: 'read' } : m
+        )
+      );
+
+      // 3. After 2.4 seconds of typing, deliver a smart contextual reply
+      setTimeout(() => {
+        setIsOtherTyping(false);
+        const replyPool = [
+          `Hey! That's awesome ✨`,
+          `Love this! Thanks for sharing 🙌`,
+          `Got your message! Hope your day is going great 🌟`,
+          `Haha so cool! 😊`,
+          `Totally agree with you! 🔥`,
+        ];
+        const chosenReply = replyPool[Math.floor(Math.random() * replyPool.length)];
+
+        const incomingMsg: DirectMessage = {
+          id: 'companion_' + Date.now(),
+          senderId: thread.participant.id,
+          receiverId: currentUser?.id,
+          text: chosenReply,
+          timestamp: 'Just now',
+          isSeen: true,
+          status: 'read',
+          isVanish: isVanishMode,
+        };
+
+        setMessages((prev) => [...prev, incomingMsg]);
+      }, 2400);
+    }, 1200);
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -222,6 +505,9 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
         isVanish: isVanishMode,
       }
     );
+
+    // Trigger simulated companion response to show live typing indicators and read receipts
+    triggerCompanionReplySimulation(textToSend);
   };
 
   const handleSendEmoji = (emoji: string) => {
@@ -247,6 +533,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
       }
     );
     setReplyingTo(null);
+    triggerCompanionReplySimulation('GIF');
   };
 
   const handleSendSticker = async (stickerUrl: string) => {
@@ -268,6 +555,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
       }
     );
     setReplyingTo(null);
+    triggerCompanionReplySimulation('Sticker');
   };
 
   const handleSendVoiceNote = (audioBlob: Blob, durationSec: number) => {
@@ -289,6 +577,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
           isVanish: isVanishMode,
         }
       );
+      triggerCompanionReplySimulation('Voice note');
     };
     reader.readAsDataURL(audioBlob);
     setReplyingTo(null);
@@ -337,6 +626,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
       }
       setReplyingTo(null);
       setActionToast(isVideo ? 'Video sent' : 'Photo sent');
+      triggerCompanionReplySimulation('Media');
     };
 
     reader.readAsDataURL(file);
@@ -358,6 +648,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
       }
     );
     setReplyingTo(null);
+    triggerCompanionReplySimulation('❤️');
   };
 
   const handleInitiateReply = (msg: DirectMessage) => {
@@ -412,6 +703,17 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
       )
     : messages;
 
+  // Identify the latest sent message by current user for read receipt
+  const lastUserSentMessage = [...filteredMessages]
+    .reverse()
+    .find((m) => currentUser && m.senderId === currentUser.id && !m.isDeleted);
+
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   return (
     <div
       className={`w-full h-full flex flex-col sm:rounded-3xl border sm:border shadow-soft-sm overflow-hidden relative transition-colors duration-300 select-none ${
@@ -419,6 +721,8 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
           ? 'bg-neutral-950 text-white border-purple-900/60'
           : 'bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800'
       }`}
+      onPointerMove={(e) => isHoldingToRecord && updateHoldPointer(e.clientX, e.clientY)}
+      onPointerUp={finishHoldRecording}
     >
       {/* Action Notification Toast */}
       {actionToast && (
@@ -436,7 +740,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
             <span>Vanish mode is active • Messages disappear when chat closes</span>
           </div>
           <button
-            onClick={() => setIsVanishMode(false)}
+            onClick={() => toggleVanishMode(false)}
             className="text-[11px] font-bold text-purple-300 hover:text-white underline cursor-pointer"
           >
             Turn off
@@ -454,7 +758,7 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
       >
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={onBack}
+            onClick={handleSafeBack}
             className="p-1.5 -ml-1 text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             aria-label="Back to conversations"
           >
@@ -537,13 +841,13 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
             {isPinned ? <PinOff size={18} /> : <Pin size={18} />}
           </button>
           <button
-            onClick={() => setIsVanishMode(!isVanishMode)}
+            onClick={() => toggleVanishMode()}
             className={`p-2 rounded-full transition-all cursor-pointer ${
               isVanishMode
                 ? 'bg-purple-600 text-white shadow-md'
                 : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
             }`}
-            title={isVanishMode ? 'Turn off Vanish Mode' : 'Turn on Vanish Mode'}
+            title={isVanishMode ? 'Turn off Vanish Mode' : 'Turn on Vanish Mode (or swipe up in chat)'}
           >
             <Ghost size={18} />
           </button>
@@ -612,6 +916,10 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
 
       {/* Messages Canvas Stream */}
       <div
+        ref={messagesContainerRef}
+        onTouchStart={handleTouchStartScroll}
+        onTouchMove={handleTouchMoveScroll}
+        onTouchEnd={handleTouchEndScroll}
         className="flex-1 overflow-y-auto p-4 relative"
         style={{
           backgroundColor: isVanishMode ? '#0a0a0c' : activeTheme?.backgroundColor,
@@ -666,25 +974,41 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
           {/* Messages list with MessageBubble component */}
           {filteredMessages.map((msg) => {
             const isMe = currentUser ? msg.senderId === currentUser.id : false;
+            const isLastSentByUser = lastUserSentMessage?.id === msg.id;
+
             return (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                isSender={isMe}
-                currentUser={currentUser}
-                participant={thread.participant}
-                theme={activeTheme}
-                onReply={handleInitiateReply}
-                onReact={handleReactToMessage}
-                onDeleteForEveryone={handleDeleteForEveryone}
-                onDeleteForMe={handleDeleteForMe}
-                onOpenMediaLightbox={(url, type) => setLightboxMedia({ url, type })}
-                onScrollToMessage={handleScrollToMessage}
-              />
+              <div key={msg.id} className="relative">
+                <MessageBubble
+                  message={msg}
+                  isSender={isMe}
+                  currentUser={currentUser!}
+                  participant={thread.participant}
+                  theme={activeTheme}
+                  onReply={handleInitiateReply}
+                  onReact={handleReactToMessage}
+                  onDeleteForEveryone={handleDeleteForEveryone}
+                  onDeleteForMe={handleDeleteForMe}
+                  onOpenMediaLightbox={(url, type) => setLightboxMedia({ url, type })}
+                  onScrollToMessage={handleScrollToMessage}
+                />
+
+                {/* Live Read Receipt below the latest user-sent message */}
+                {isMe && isLastSentByUser && (msg.isSeen || msg.status === 'read') && (
+                  <div className="flex items-center justify-end gap-1.5 pr-2 pt-0.5 animate-in fade-in duration-200">
+                    <span className="text-[11px] font-medium text-neutral-400">Seen</span>
+                    <img
+                      src={thread.participant.avatar}
+                      alt={thread.participant.username}
+                      referrerPolicy="no-referrer"
+                      className="w-3.5 h-3.5 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                    />
+                  </div>
+                )}
+              </div>
             );
           })}
 
-          {/* Real-time Typing Indicator Bubble */}
+          {/* Real-time Typing Indicator with Animated Pulsing Dots */}
           {isOtherTyping && (
             <div className="flex items-end gap-2 justify-start animate-in fade-in slide-in-from-bottom-2 duration-200">
               <img
@@ -693,11 +1017,49 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
                 referrerPolicy="no-referrer"
                 className="w-7 h-7 rounded-full object-cover mb-0.5 border border-neutral-200 dark:border-neutral-700 flex-shrink-0"
               />
-              <div className="bg-white dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700/80 rounded-3xl rounded-bl-sm px-4 py-3 shadow-soft-xs flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce [animation-delay:-0.3s]" />
-                <span className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce [animation-delay:-0.15s]" />
-                <span className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce" />
+              <div className="bg-neutral-100 dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700/80 rounded-3xl rounded-bl-sm px-4 py-3 shadow-soft-xs flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-300 animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-300 animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-300 animate-bounce" />
               </div>
+            </div>
+          )}
+
+          {/* Swipe-Up Circular Progress Gauge for Vanish Mode */}
+          {swipeUpDistance > 10 && (
+            <div className="py-4 flex flex-col items-center justify-center gap-2 animate-in fade-in duration-100 select-none">
+              <div
+                className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-transform ${
+                  swipeUpDistance >= 70
+                    ? 'bg-purple-600 text-white scale-110 shadow-lg'
+                    : 'bg-neutral-800/80 text-purple-300 border border-purple-500/40'
+                }`}
+              >
+                <Ghost size={20} className={swipeUpDistance >= 70 ? 'animate-bounce' : ''} />
+                {/* SVG Progress Ring */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90">
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="21"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    className="text-purple-400"
+                    strokeDasharray={132}
+                    strokeDashoffset={132 - (Math.min(70, swipeUpDistance) / 70) * 132}
+                  />
+                </svg>
+              </div>
+              <p className="text-xs font-semibold text-purple-300 dark:text-purple-200">
+                {swipeUpDistance >= 70
+                  ? isVanishMode
+                    ? 'Release to turn off vanish mode'
+                    : 'Release to turn on vanish mode'
+                  : isVanishMode
+                  ? 'Swipe up to turn off vanish mode'
+                  : 'Swipe up to turn on vanish mode'}
+              </p>
             </div>
           )}
 
@@ -728,7 +1090,52 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
         </div>
       )}
 
-      {/* Voice Recorder Bar (replaces composer when recording) */}
+      {/* Hold-to-Record Overlay Banner */}
+      {isHoldingToRecord && (
+        <div className="px-4 py-3 bg-neutral-950 text-white border-t border-neutral-800 flex items-center justify-between gap-4 animate-in slide-in-from-bottom-2 duration-150 select-none">
+          {/* Cancel Slide Indicator */}
+          <div
+            className={`flex items-center gap-1.5 text-xs transition-colors ${
+              isCancelTargeted ? 'text-rose-500 font-bold scale-105' : 'text-neutral-400'
+            }`}
+          >
+            <Trash2 size={16} />
+            <span>{isCancelTargeted ? 'Release to cancel' : '◀ Slide to cancel'}</span>
+          </div>
+
+          {/* Center Soundwave Visualization & Live Timer */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <span className="text-xs font-semibold tabular-nums text-white">
+              {formatTimer(holdRecordingSeconds)}
+            </span>
+            <div className="flex items-center gap-1 h-6 px-1">
+              {liveVolumeLevels.map((lvl, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-rose-500 rounded-full transition-all duration-75"
+                  style={{
+                    height: `${lvl}%`,
+                    opacity: 0.5 + (lvl / 100) * 0.5,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Slide up to lock indicator */}
+          <div
+            className={`flex items-center gap-1 text-xs transition-colors ${
+              isLockTargeted ? 'text-blue-400 font-bold scale-105' : 'text-neutral-400'
+            }`}
+          >
+            <Lock size={15} />
+            <span>{isLockTargeted ? 'Locked' : '▲ Lock'}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Voice Recorder Bar (hands-free locked mode) */}
       {isVoiceRecordingOpen ? (
         <VoiceRecorderBar
           onSendVoiceNote={handleSendVoiceNote}
@@ -822,11 +1229,19 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
 
                 {/* Media shortcuts inside pill */}
                 <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
+                  {/* Hold-to-record or click-to-record Mic Button */}
                   <button
                     type="button"
-                    onClick={() => setIsVoiceRecordingOpen(true)}
-                    className="p-1 hover:text-blue-500 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-700/60 cursor-pointer"
-                    title="Voice note"
+                    onPointerDown={(e) => startHoldRecording(e.clientX, e.clientY)}
+                    onClick={() => {
+                      if (!isHoldingToRecord) {
+                        setIsVoiceRecordingOpen(true);
+                      }
+                    }}
+                    className={`p-1.5 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-700/60 cursor-pointer transition-transform ${
+                      isHoldingToRecord ? 'text-rose-500 scale-125 bg-rose-100 dark:bg-rose-950/50' : 'hover:text-blue-500'
+                    }`}
+                    title="Hold to record voice note, release to send"
                   >
                     <Mic size={18} />
                   </button>
@@ -962,3 +1377,4 @@ export const ChatConversation: React.FC<ChatConversationProps> = ({ thread, onBa
     </div>
   );
 };
+

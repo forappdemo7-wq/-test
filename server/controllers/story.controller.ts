@@ -43,6 +43,33 @@ export class StoryController {
     }
   }
 
+  async votePoll(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { userId = req.user?.id || 'user_current', optionId } = req.body;
+      const result = await storyService.votePoll(id, userId, optionId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async submitQuestionResponse(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const authUser = req.user as any;
+      const user = {
+        id: req.body.userId || authUser?.id || 'user_current',
+        username: req.body.username || authUser?.username || 'user',
+        avatar: req.body.avatar || authUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      };
+      const result = await storyService.submitQuestionResponse(id, user, req.body.response);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getViewers(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;

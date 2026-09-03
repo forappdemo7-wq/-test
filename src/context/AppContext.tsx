@@ -5,6 +5,10 @@ import {
   Post,
   StoryGroup,
   StoryItem,
+  StoryPollSticker,
+  StoryQuestionSticker,
+  StoryMusicSticker,
+  StoryQuestionResponse,
   Reel,
   ReelWatchHistoryItem,
   ChatThread,
@@ -19,6 +23,8 @@ import {
   LoginActivityLog,
   SuspiciousLoginAlert,
   TwoFactorConfig,
+  PostDraft,
+  AudioTrack,
 } from '../types';
 import confetti from 'canvas-confetti';
 import {
@@ -166,7 +172,17 @@ interface AppContextType {
   nextStoryGroup: () => void;
   prevStoryGroup: () => void;
   markStorySeen: (userId: string, storyId: string) => void;
-  addNewStory: (storyItem: { mediaUrl: string; caption?: string; filter?: any; isCloseFriends?: boolean }) => Promise<void>;
+  addNewStory: (storyItem: {
+    mediaUrl: string;
+    caption?: string;
+    filter?: any;
+    isCloseFriends?: boolean;
+    poll?: StoryPollSticker;
+    question?: StoryQuestionSticker;
+    music?: StoryMusicSticker;
+  }) => Promise<void>;
+  voteStoryPoll: (storyId: string, optionId: string) => Promise<void>;
+  submitStoryQuestion: (storyId: string, responseText: string) => Promise<void>;
   toggleLikeStory: (storyId: string) => Promise<boolean>;
   deleteStory: (storyId: string) => Promise<void>;
 
@@ -271,6 +287,20 @@ interface AppContextType {
   deleteNotification: (id: string) => Promise<void>;
   unreadNotificationsCount: number;
   unreadMessagesCount: number;
+
+  // Drafts & Post Scheduling
+  drafts: PostDraft[];
+  saveDraft: (draft: Omit<PostDraft, 'id' | 'userId' | 'savedAt'>) => Promise<string>;
+  deleteDraft: (draftId: string) => Promise<void>;
+  loadDraft: (draftId: string) => PostDraft | undefined;
+  schedulePost: (postData: {
+    media: PostMedia[];
+    caption: string;
+    location?: string;
+    musicTrack?: AudioTrack;
+    createType: 'post' | 'reel' | 'story';
+    scheduledAt: string;
+  }) => Promise<void>;
 
   // Navigation & Tabs
   activeTab: TabType;
@@ -427,6 +457,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Real-time online users list
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
+
+  // Drafts & Scheduled Posts state
+  const [drafts, setDrafts] = useState<PostDraft[]>(() => {
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const savedDrafts = localStorage.getItem(`instavibe_drafts_${u.id}`);
+          if (savedDrafts) return JSON.parse(savedDrafts);
+        }
+      }
+      const genericDrafts = localStorage.getItem('instavibe_drafts');
+      if (genericDrafts) return JSON.parse(genericDrafts);
+    } catch {}
+    return [];
+  });
 
   // Pending follow requests for private accounts
   const [pendingFollowRequests, setPendingFollowRequests] = useState<any[]>([]);
@@ -1673,6 +1720,96 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Drafts & Post Scheduling Actions
+  const persistDrafts = (newDrafts: PostDraft[]) => {
+    setDrafts(newDrafts);
+    try {
+      if (currentUser?.id && currentUser.id !== 'guest_user') {
+        localStorage.setItem(`instavibe_drafts_${currentUser.id}`, JSON.stringify(newDrafts));
+      } else {
+        localStorage.setItem('instavibe_drafts', JSON.stringify(newDrafts));
+      }
+    } catch (e) {
+      console.warn('Failed to persist drafts to local storage:', e);
+    }
+  };
+
+  const saveDraft = async (draftData: Omit<PostDraft, 'id' | 'userId' | 'savedAt'>): Promise<string> => {
+    const draftId = 'draft_' + Date.now();
+    const newDraft: PostDraft = {
+      ...draftData,
+      id: draftId,
+      userId: currentUser?.id || 'guest_user',
+      savedAt: new Date().toISOString(),
+    };
+
+    const updated = [newDraft, ...drafts.filter((d) => d.id !== draftId)];
+    persistDrafts(updated);
+    toast.success('Draft saved locally', { icon: '📝' });
+    return draftId;
+  };
+
+  const deleteDraft = async (draftId: string) => {
+    const updated = drafts.filter((d) => d.id !== draftId);
+    persistDrafts(updated);
+    toast.success('Draft discarded');
+  };
+
+  const loadDraft = (draftId: string): PostDraft | undefined => {
+    return drafts.find((d) => d.id === draftId);
+  };
+
+  const schedulePost = async (postData: {
+    media: PostMedia[];
+    caption: string;
+    location?: string;
+    musicTrack?: AudioTrack;
+    createType: 'post' | 'reel' | 'story';
+    scheduledAt: string;
+  }) => {
+    const scheduleDate = new Date(postData.scheduledAt);
+    const delayMs = Math.max(1000, scheduleDate.getTime() - Date.now());
+
+    // Save as scheduled draft
+    await saveDraft({
+      createType: postData.createType,
+      media: postData.media,
+      caption: postData.caption,
+      location: postData.location,
+      audioTrack: postData.musicTrack,
+      scheduledAt: postData.scheduledAt,
+    });
+
+    const formattedTime = scheduleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    toast.success(`Post scheduled for ${formattedTime}`, { icon: '⏰' });
+
+    // Set auto-publish timeout in current runtime session if within reasonable window
+    if (delayMs < 86400000) {
+      setTimeout(async () => {
+        if (postData.createType === 'post') {
+          await createNewPost({
+            media: postData.media,
+            caption: postData.caption,
+            location: postData.location,
+            musicTrack: postData.musicTrack
+              ? { title: postData.musicTrack.title, artist: postData.musicTrack.artist }
+              : undefined,
+          });
+        } else if (postData.createType === 'reel' && postData.media[0]) {
+          await createNewReel({
+            videoUrl: postData.media[0].url,
+            posterUrl: postData.media[0].url,
+            caption: postData.caption,
+            musicTrack: postData.musicTrack
+              ? { title: postData.musicTrack.title, artist: postData.musicTrack.artist }
+              : undefined,
+          });
+        }
+        toast.success(`Scheduled ${postData.createType} is now live! ✨`);
+      }, delayMs);
+    }
+  };
+
   // Story Actions
   const openStoryViewer = (index: number) => {
     setActiveStoryGroupIndex(index);
@@ -1737,6 +1874,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     caption?: string;
     filter?: any;
     isCloseFriends?: boolean;
+    poll?: StoryPollSticker;
+    question?: StoryQuestionSticker;
+    music?: StoryMusicSticker;
   }) => {
     if (!currentUser) return;
     const isCF = Boolean(storyItem.isCloseFriends);
@@ -1749,6 +1889,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       filter: storyItem.filter,
       isCloseFriends: isCF,
       seen: false,
+      poll: storyItem.poll,
+      question: storyItem.question,
+      music: storyItem.music,
     };
 
     setStories((prev) => {
@@ -1789,6 +1932,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           caption: storyItem.caption,
           filter: storyItem.filter,
           isCloseFriends: isCF,
+          poll: storyItem.poll,
+          question: storyItem.question,
+          music: storyItem.music,
         }),
       });
       if (res.ok) {
@@ -1807,6 +1953,100 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (e) {
       console.error('Error saving story to server:', e);
+    }
+  };
+
+  const voteStoryPoll = async (storyId: string, optionId: string) => {
+    if (!currentUser) return;
+    setStories((prev) =>
+      prev.map((g) => ({
+        ...g,
+        items: g.items.map((it) => {
+          if (it.id === storyId && it.poll) {
+            const currentVoted = it.poll.userVotedOptionId;
+            const updatedOptions = it.poll.options.map((opt) => {
+              let voters = Array.isArray(opt.voterUserIds) ? [...opt.voterUserIds] : [];
+              if (currentVoted === opt.id) {
+                voters = voters.filter((id) => id !== currentUser.id);
+              }
+              if (opt.id === optionId) {
+                if (!voters.includes(currentUser.id)) voters.push(currentUser.id);
+              }
+              return {
+                ...opt,
+                voterUserIds: voters,
+                votesCount: voters.length,
+              };
+            });
+            const totalVotes = updatedOptions.reduce((acc, o) => acc + o.votesCount, 0);
+            return {
+              ...it,
+              poll: {
+                ...it.poll,
+                options: updatedOptions,
+                userVotedOptionId: optionId,
+                totalVotes,
+              },
+            };
+          }
+          return it;
+        }),
+      }))
+    );
+
+    try {
+      await fetch(`/api/stories/${storyId}/poll-vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, optionId }),
+      });
+    } catch (e) {
+      console.error('Failed to vote on story poll:', e);
+    }
+  };
+
+  const submitStoryQuestion = async (storyId: string, responseText: string) => {
+    if (!currentUser || !responseText.trim()) return;
+    const newResponse: StoryQuestionResponse = {
+      id: 'qr_' + Date.now(),
+      userId: currentUser.id,
+      username: currentUser.username,
+      userAvatar: currentUser.avatar,
+      response: responseText.trim(),
+      timestamp: 'Just now',
+    };
+
+    setStories((prev) =>
+      prev.map((g) => ({
+        ...g,
+        items: g.items.map((it) => {
+          if (it.id === storyId && it.question) {
+            return {
+              ...it,
+              question: {
+                ...it.question,
+                responses: [newResponse, ...(it.question.responses || [])],
+              },
+            };
+          }
+          return it;
+        }),
+      }))
+    );
+
+    try {
+      await fetch(`/api/stories/${storyId}/question-response`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          username: currentUser.username,
+          avatar: currentUser.avatar,
+          response: responseText.trim(),
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to submit question response:', e);
     }
   };
 
@@ -3214,6 +3454,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         prevStoryGroup,
         markStorySeen,
         addNewStory,
+        voteStoryPoll,
+        submitStoryQuestion,
         toggleLikeStory,
         deleteStory,
         reels: visibleReels,
@@ -3275,6 +3517,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteNotification,
         unreadNotificationsCount,
         unreadMessagesCount,
+        drafts,
+        saveDraft,
+        deleteDraft,
+        loadDraft,
+        schedulePost,
         activeTab,
         setActiveTab,
         openPostDetail,
