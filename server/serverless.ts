@@ -1,7 +1,7 @@
-import { createExpressApp } from '../server/app';
-import { initDatabase } from '../server/core/database/migrations';
-import { initializeJobHandlers } from '../server/core/queue/job-handlers';
-import { errorHandlerMiddleware, notFoundHandler } from '../server/middleware/error-handler.middleware';
+import { createExpressApp } from './app';
+import { initDatabase } from './core/database/migrations';
+import { initializeJobHandlers } from './core/queue/job-handlers';
+import { errorHandlerMiddleware, notFoundHandler } from './middleware/error-handler.middleware';
 
 const app = createExpressApp();
 app.use(errorHandlerMiddleware);
@@ -17,7 +17,7 @@ async function ensureInitialized() {
         await initDatabase();
         initializeJobHandlers();
       } catch (err) {
-        console.error('Database migration/init error in serverless runtime:', err);
+        console.error('Database migration/init notice in serverless runtime:', err);
       } finally {
         isReady = true;
       }
