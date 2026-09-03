@@ -737,6 +737,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [currentUser?.id]);
 
+  // Safe API response parser preventing Unexpected end of JSON errors on non-OK or non-JSON payloads
+  const safeParseApiResponse = async (res: Response, fallbackMessage: string): Promise<{ ok: boolean; data: any; error?: string }> => {
+    try {
+      const text = await res.text();
+      if (!text || !text.trim()) {
+        return {
+          ok: res.ok,
+          data: null,
+          error: res.ok ? undefined : `Server error (${res.status}: ${res.statusText || 'No response body'})`,
+        };
+      }
+      try {
+        const data = JSON.parse(text);
+        if (!res.ok) {
+          return {
+            ok: false,
+            data,
+            error: data?.error?.message || data?.error || fallbackMessage,
+          };
+        }
+        return { ok: true, data };
+      } catch {
+        return {
+          ok: false,
+          data: null,
+          error: !res.ok ? `Server error (${res.status}: ${res.statusText || 'HTML response'})` : 'Invalid response format',
+        };
+      }
+    } catch (err: any) {
+      return {
+        ok: false,
+        data: null,
+        error: err.message || fallbackMessage,
+      };
+    }
+  };
+
   // Auth Operations
   const signIn = async (identifier: string, password: string, rememberMe: boolean = true) => {
     try {
@@ -747,10 +784,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify({ identifier, password, rememberMe, clientDevice }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Failed to sign in' };
+      const parsed = await safeParseApiResponse(res, 'Failed to sign in');
+      if (!parsed.ok) {
+        return { success: false, error: parsed.error || 'Failed to sign in' };
       }
+      const data = parsed.data;
 
       if (data.requires2Fa) {
         return {
@@ -799,10 +837,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify({ ...signUpData, rememberMe, clientDevice }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Failed to create account' };
+      const parsed = await safeParseApiResponse(res, 'Failed to create account');
+      if (!parsed.ok) {
+        return { success: false, error: parsed.error || 'Failed to create account' };
       }
+      const data = parsed.data;
 
       if (data.user) {
         if (data.tokens) {
@@ -838,8 +877,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify({ ...payload, rememberMe, clientDevice }),
       });
 
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error || 'Google sign-in failed' };
+      const parsed = await safeParseApiResponse(res, 'Google sign-in failed');
+      if (!parsed.ok) return { success: false, error: parsed.error || 'Google sign-in failed' };
+      const data = parsed.data;
 
       if (data.user) {
         if (data.tokens) storeAuthSession(data.tokens, data.sessionId, rememberMe);
@@ -872,8 +912,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify({ ...payload, rememberMe, clientDevice }),
       });
 
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error || 'Apple sign-in failed' };
+      const parsed = await safeParseApiResponse(res, 'Apple sign-in failed');
+      if (!parsed.ok) return { success: false, error: parsed.error || 'Apple sign-in failed' };
+      const data = parsed.data;
 
       if (data.user) {
         if (data.tokens) storeAuthSession(data.tokens, data.sessionId, rememberMe);
