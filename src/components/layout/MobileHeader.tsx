@@ -17,7 +17,7 @@ import { SettingsDrawer } from '../profile/SettingsDrawer';
 export const MobileHeader: React.FC = () => {
   const {
     currentUser,
-    availableProfiles,
+    savedAccounts,
     switchProfile,
     activeTab,
     setActiveTab,
@@ -67,34 +67,44 @@ export const MobileHeader: React.FC = () => {
                   Switch Account
                 </div>
                 <div className="space-y-1 max-h-48 overflow-y-auto no-scrollbar">
-                  {availableProfiles.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => {
-                        switchProfile(p);
-                        setIsProfileDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2.5 rounded-2xl text-left transition-all duration-150 cursor-pointer ${
-                        currentUser?.id === p.id
-                          ? 'bg-neutral-100 dark:bg-neutral-800/80 font-bold text-neutral-950 dark:text-white shadow-soft-xs'
-                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={p.avatar}
-                          alt={p.name}
-                          referrerPolicy="no-referrer"
-                          className="w-9 h-9 rounded-full object-cover border border-neutral-300 dark:border-neutral-700"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold leading-tight truncate">@{p.username}</p>
-                          <p className="text-xs text-neutral-500 truncate">{p.name}</p>
+                  {savedAccounts
+                    .filter((p) => p && p.id && p.id !== 'guest_user')
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          if (currentUser?.id !== p.id) {
+                            switchProfile(p);
+                          }
+                          setIsProfileDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-2xl text-left transition-all duration-150 cursor-pointer ${
+                          currentUser?.id === p.id
+                            ? 'bg-neutral-100 dark:bg-neutral-800/80 font-bold text-neutral-950 dark:text-white shadow-soft-xs'
+                            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={p.avatar}
+                            alt={p.name}
+                            referrerPolicy="no-referrer"
+                            className="w-9 h-9 rounded-full object-cover border border-neutral-300 dark:border-neutral-700"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold leading-tight truncate">@{p.username}</p>
+                            <p className="text-xs text-neutral-500 truncate">{p.name}</p>
+                          </div>
                         </div>
-                      </div>
-                      {currentUser?.id === p.id && <Check size={16} className="text-blue-500 stroke-[2.5]" />}
-                    </button>
-                  ))}
+                        {currentUser?.id === p.id && <Check size={16} className="text-blue-500 stroke-[2.5]" />}
+                      </button>
+                    ))}
+
+                  {savedAccounts.filter((p) => p && p.id && p.id !== 'guest_user').length <= 1 && (
+                    <div className="px-3 py-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+                      No other accounts saved on this device.
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-2 mt-1.5 border-t border-neutral-100 dark:border-neutral-800/80 space-y-1">

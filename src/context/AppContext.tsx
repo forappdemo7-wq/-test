@@ -491,6 +491,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {}
       return updated;
     });
+
+    if (currentUser?.id === userId) {
+      const remaining = savedAccounts.filter((u) => u.id !== userId);
+      if (remaining.length > 0) {
+        switchProfile(remaining[0]);
+      } else {
+        logout();
+      }
+    }
   };
 
   // Auth Modals & Security State
@@ -1252,6 +1261,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const switchProfile = (user: User) => {
+    // Strict privacy check: only allow switching to an account that is already in savedAccounts on this device
+    const isSaved = savedAccounts.some((u) => u.id === user.id);
+    if (!isSaved && user.id !== currentUser?.id) {
+      console.warn('Unauthorized account switch attempt: account is not saved on this device');
+      return;
+    }
     setActiveThreadId(null);
     setThreads([]);
     setNotifications([]);

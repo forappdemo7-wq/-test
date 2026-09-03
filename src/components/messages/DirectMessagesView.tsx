@@ -41,7 +41,9 @@ export const DirectMessagesView: React.FC = () => {
     currentUser,
     updateUserNote,
     availableProfiles,
+    savedAccounts,
     switchProfile,
+    openAuthModal,
     setActiveTab,
     togglePinThread,
     pinnedThreadIds,
@@ -183,36 +185,60 @@ export const DirectMessagesView: React.FC = () => {
               <div className="px-3 py-1.5 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
                 Switch Profile
               </div>
-              {availableProfiles.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    switchProfile(p);
-                    setIsAccountMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${
-                    currentUser?.id === p.id
-                      ? 'bg-neutral-100 dark:bg-neutral-800 font-bold text-neutral-950 dark:text-white'
-                      : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <img
-                      src={p.avatar}
-                      alt={p.name}
-                      referrerPolicy="no-referrer"
-                      className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
-                    />
-                    <div className="text-left truncate">
-                      <p className="text-xs font-semibold leading-tight truncate">{p.username}</p>
-                      <p className="text-[10px] text-neutral-400 leading-tight truncate">{p.name}</p>
-                    </div>
+              <div className="space-y-1 max-h-48 overflow-y-auto no-scrollbar">
+                {savedAccounts
+                  .filter((p) => p && p.id && p.id !== 'guest_user')
+                  .map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        if (currentUser?.id !== p.id) {
+                          switchProfile(p);
+                        }
+                        setIsAccountMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${
+                        currentUser?.id === p.id
+                          ? 'bg-neutral-100 dark:bg-neutral-800 font-bold text-neutral-950 dark:text-white'
+                          : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img
+                          src={p.avatar}
+                          alt={p.name}
+                          referrerPolicy="no-referrer"
+                          className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                        />
+                        <div className="text-left truncate">
+                          <p className="text-xs font-semibold leading-tight truncate">@{p.username}</p>
+                          <p className="text-[10px] text-neutral-400 leading-tight truncate">{p.name}</p>
+                        </div>
+                      </div>
+                      {currentUser?.id === p.id && (
+                        <span className="w-2 h-2 rounded-full bg-blue-500 mr-1" />
+                      )}
+                    </button>
+                  ))}
+
+                {savedAccounts.filter((p) => p && p.id && p.id !== 'guest_user').length <= 1 && (
+                  <div className="px-3 py-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+                    No other accounts saved on this device.
                   </div>
-                  {currentUser?.id === p.id && (
-                    <span className="w-2 h-2 rounded-full bg-blue-500 mr-1" />
-                  )}
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                <button
+                  onClick={() => {
+                    setIsAccountMenuOpen(false);
+                    openAuthModal('signin');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 rounded-xl transition-colors cursor-pointer"
+                >
+                  + Log into another account
                 </button>
-              ))}
+              </div>
             </div>
           )}
         </div>

@@ -12,15 +12,12 @@ import {
   AlertCircle,
   LogIn,
   UserPlus,
-  Fingerprint,
   KeyRound,
   ShieldCheck,
   ShieldAlert,
   ArrowLeft,
   Smartphone,
-  Globe,
   RefreshCw,
-  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -38,16 +35,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const {
     signIn,
     signUp,
-    signInWithGoogle,
-    signInWithApple,
-    signInWithPasskey,
     verify2FALogin,
     requestPasswordReset,
     verifyPasswordReset,
     confirmEmailVerification,
     sendEmailVerification,
-    availableProfiles,
-    switchProfile,
     currentUser,
     authModalMode,
     setAuthModalMode,
@@ -86,11 +78,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [forgotStep, setForgotStep] = useState<'request' | 'verify'>('request');
   const [forgotResetCode, setForgotResetCode] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
-  const [demoResetCode, setDemoResetCode] = useState('');
 
   // Email Verification fields
   const [emailVerifyCode, setEmailVerifyCode] = useState('');
-  const [demoVerifyCode, setDemoVerifyCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Sign up fields
@@ -228,7 +218,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       if (res.success && res.user) {
         if (res.emailVerificationCode) {
-          setDemoVerifyCode(res.emailVerificationCode);
           setSuccessMessage('Account created! Please verify your email.');
           setMode('verify_email');
         } else {
@@ -247,81 +236,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  // Google OAuth Login
-  const handleGoogleLogin = async () => {
-    setErrorMessage('');
-    setLoading(true);
-    try {
-      // Authenticate with Google identity simulation
-      const res = await signInWithGoogle(
-        {
-          email: 'alex.rivera@gmail.com',
-          name: 'Alex Rivera',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-          googleId: 'g_' + Math.random().toString(36).substring(2, 10),
-        },
-        rememberMe
-      );
-
-      if (res.success && res.user) {
-        setSuccessMessage(`Signed in with Google as @${res.user.username}`);
-        setTimeout(() => onClose(), 600);
-      } else {
-        setErrorMessage(res.error || 'Google sign-in failed');
-      }
-    } catch (e: any) {
-      setErrorMessage(e.message || 'Google authentication error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Apple OAuth Login
-  const handleAppleLogin = async () => {
-    setErrorMessage('');
-    setLoading(true);
-    try {
-      const res = await signInWithApple(
-        {
-          email: 'user.apple@icloud.com',
-          name: 'Apple User',
-          appleUserId: 'apple_' + Math.random().toString(36).substring(2, 10),
-        },
-        rememberMe
-      );
-
-      if (res.success && res.user) {
-        setSuccessMessage(`Signed in with Apple ID`);
-        setTimeout(() => onClose(), 600);
-      } else {
-        setErrorMessage(res.error || 'Apple sign-in failed');
-      }
-    } catch (e: any) {
-      setErrorMessage(e.message || 'Apple sign-in error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Passkey Login
-  const handlePasskeyLogin = async () => {
-    setErrorMessage('');
-    setLoading(true);
-    try {
-      const res = await signInWithPasskey(rememberMe);
-      if (res.success && res.user) {
-        setSuccessMessage(`Passkey verified! Welcome @${res.user.username}`);
-        setTimeout(() => onClose(), 600);
-      } else {
-        setErrorMessage(res.error || 'No registered passkey found on this device.');
-      }
-    } catch (e: any) {
-      setErrorMessage(e.message || 'Passkey verification failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Forgot Password Request
   const handleForgotPasswordRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -335,10 +249,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const res = await requestPasswordReset(forgotIdentifier.trim());
       if (res.success) {
         setSuccessMessage(res.message || 'Reset code sent to your registered email.');
-        if (res.debugCode) {
-          setDemoResetCode(res.debugCode);
-          setForgotResetCode(res.debugCode);
-        }
         setForgotStep('verify');
       } else {
         setErrorMessage(res.error || 'User not found.');
@@ -408,10 +318,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const res = await sendEmailVerification();
       if (res.success) {
         setSuccessMessage('A new verification code has been dispatched.');
-        if (res.debugCode) {
-          setDemoVerifyCode(res.debugCode);
-          setEmailVerifyCode(res.debugCode);
-        }
         setResendCooldown(60);
       } else {
         setErrorMessage(res.error || 'Failed to resend code');
@@ -560,69 +466,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* MODE: SIGN IN */}
           {mode === 'signin' && (
             <div className="space-y-4">
-              {/* Fast Social & Biometric Logins */}
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="py-2.5 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700/60 flex items-center justify-center gap-1.5 transition-all text-xs font-semibold text-neutral-700 dark:text-neutral-200 shadow-sm cursor-pointer"
-                  title="Sign in with Google"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                  <span>Google</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleAppleLogin}
-                  disabled={loading}
-                  className="py-2.5 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700/60 flex items-center justify-center gap-1.5 transition-all text-xs font-semibold text-neutral-700 dark:text-neutral-200 shadow-sm cursor-pointer"
-                  title="Sign in with Apple"
-                >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 170 170">
-                    <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.6-7.8-11.74-14.28-5.43-8.47-9.7-18.06-12.81-28.77-3.11-10.72-4.67-21.05-4.67-30.01 0-14.02 3.53-25.59 10.59-34.71 7.06-9.13 16.03-13.8 26.91-14.02 4.13 0 9.07 1.13 14.83 3.38 5.76 2.25 9.45 3.44 11.07 3.57 1.2.12 5.06-1.12 11.59-3.73 6.52-2.61 11.83-3.76 15.93-3.46 11.96.86 21.36 4.96 28.2 12.3-10.43 6.31-15.54 15.11-15.34 26.4.2 8.7 3.44 16.03 9.72 21.99 6.28 5.96 13.91 9.46 22.89 10.51-2.18 6.52-4.8 12.83-7.87 18.93zM119.22 31.84c0-7.39 2.67-14.4 8.01-21.03 5.34-6.63 12.08-10.57 20.22-11.81.44 1.3.66 2.61.66 3.91 0 7.39-2.73 14.54-8.19 21.46-5.46 6.92-12.28 10.96-20.46 12.12-.11-1.52-.24-3.07-.24-4.65z" />
-                  </svg>
-                  <span>Apple</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handlePasskeyLogin}
-                  disabled={loading}
-                  className="py-2.5 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-blue-50 dark:hover:bg-blue-950/30 flex items-center justify-center gap-1.5 transition-all text-xs font-semibold text-neutral-700 dark:text-neutral-200 shadow-sm cursor-pointer hover:border-blue-300 dark:hover:border-blue-800"
-                  title="Sign in with Passkey / Face ID"
-                >
-                  <Fingerprint size={16} className="text-blue-500" />
-                  <span>Passkey</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3 my-2">
-                <div className="flex-1 h-[1px] bg-neutral-200 dark:bg-neutral-800" />
-                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  or email login
-                </span>
-                <div className="flex-1 h-[1px] bg-neutral-200 dark:bg-neutral-800" />
-              </div>
-
               <form onSubmit={handleSignInSubmit} className="space-y-3.5">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">
@@ -712,52 +555,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   )}
                 </button>
               </form>
-
-              {/* Fast switch list if accounts exist */}
-              {availableProfiles.length > 0 && (
-                <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800">
-                  <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-2.5">
-                    Saved accounts on this device
-                  </span>
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto no-scrollbar">
-                    {availableProfiles.map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => {
-                          switchProfile(user);
-                          onClose();
-                        }}
-                        className={`w-full flex items-center gap-3 p-2 rounded-xl transition-all ${
-                          currentUser?.id === user.id
-                            ? 'bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800'
-                            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60'
-                        }`}
-                      >
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          referrerPolicy="no-referrer"
-                          className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
-                        />
-                        <div className="text-left flex-1 min-w-0">
-                          <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">
-                            {user.name}
-                          </p>
-                          <p className="text-[11px] text-neutral-500 truncate">
-                            @{user.username}
-                          </p>
-                        </div>
-                        {currentUser?.id === user.id && (
-                          <span className="text-[10px] font-bold text-blue-500 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 rounded-full">
-                            Active
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -894,19 +691,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </form>
               ) : (
                 <form onSubmit={handleForgotPasswordVerify} className="space-y-3.5">
-                  {demoResetCode && (
-                    <div className="p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-xs flex items-center justify-between text-blue-700 dark:text-blue-300">
-                      <span>Demo Reset Code: <strong>{demoResetCode}</strong></span>
-                      <button
-                        type="button"
-                        onClick={() => setForgotResetCode(demoResetCode)}
-                        className="text-[11px] font-bold underline"
-                      >
-                        Auto-fill
-                      </button>
-                    </div>
-                  )}
-
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">
                       6-Digit Reset Code
@@ -979,19 +763,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   We've sent a 6-digit confirmation code to your inbox to protect your account.
                 </p>
               </div>
-
-              {demoVerifyCode && (
-                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs flex items-center justify-between text-emerald-700 dark:text-emerald-300">
-                  <span>Verification Code: <strong>{demoVerifyCode}</strong></span>
-                  <button
-                    type="button"
-                    onClick={() => setEmailVerifyCode(demoVerifyCode)}
-                    className="text-[11px] font-bold underline"
-                  >
-                    Auto-fill
-                  </button>
-                </div>
-              )}
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">

@@ -27,6 +27,9 @@ export const FeedList: React.FC = () => {
     posts: initialPosts,
     currentUser,
     availableProfiles,
+    savedAccounts,
+    switchProfile,
+    openAuthModal,
     toggleFollowUser,
     setActiveTab,
     setIsEditProfileOpen,
@@ -364,7 +367,16 @@ export const FeedList: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setIsEditProfileOpen(true)}
+                onClick={() => {
+                  const otherSaved = savedAccounts.filter(
+                    (u) => u && u.id && u.id !== 'guest_user' && u.id !== currentUser.id
+                  );
+                  if (otherSaved.length === 1) {
+                    switchProfile(otherSaved[0]);
+                  } else {
+                    openAuthModal('signin');
+                  }
+                }}
                 className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline cursor-pointer flex-shrink-0"
               >
                 Switch

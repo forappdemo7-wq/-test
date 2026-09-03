@@ -51,7 +51,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose 
     currentUser,
     savedAccounts,
     removeSavedAccount,
-    availableProfiles,
     switchProfile,
     isDark,
     toggleDarkMode,
@@ -144,64 +143,91 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose 
           <div className="p-5 space-y-4 overflow-y-auto flex-1 text-sm text-neutral-800 dark:text-neutral-200">
             <div>
               <h3 className="font-bold text-sm text-neutral-900 dark:text-white">Logged in accounts</h3>
-              <p className="text-xs text-neutral-500 mt-0.5">Tap an account to switch instantly without losing your session.</p>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Switch between accounts you have logged into on this device.
+              </p>
             </div>
 
-            <div className="space-y-1.5">
-              {(savedAccounts.length > 0 ? savedAccounts : availableProfiles.filter((u) => u.id !== 'guest_user')).map((user) => {
-                const isCurrent = currentUser ? currentUser.id === user.id : false;
-                return (
-                  <div
-                    key={user.id}
-                    className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                      isCurrent
-                        ? 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/60'
-                        : 'bg-neutral-50 dark:bg-neutral-800/40 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 cursor-pointer'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchProfile(user);
-                        onClose();
-                      }}
-                      className="flex items-center gap-3 flex-1 text-left min-w-0 cursor-pointer"
+            <div className="space-y-2">
+              {savedAccounts
+                .filter((u) => u && u.id && u.id !== 'guest_user')
+                .map((user) => {
+                  const isCurrent = currentUser ? currentUser.id === user.id : false;
+                  return (
+                    <div
+                      key={user.id}
+                      className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                        isCurrent
+                          ? 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/60'
+                          : 'bg-neutral-50 dark:bg-neutral-800/40 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800/80'
+                      }`}
                     >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        referrerPolicy="no-referrer"
-                        className="w-10 h-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-semibold text-sm text-neutral-900 dark:text-white truncate">
-                          @{user.username}
-                        </p>
-                        <p className="text-xs text-neutral-500 truncate">{user.name}</p>
-                      </div>
-                    </button>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {isCurrent ? (
-                        <span className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2.5 py-1 rounded-full">
-                          <Check size={14} className="stroke-[3]" /> Active
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isCurrent) {
                             switchProfile(user);
                             onClose();
-                          }}
-                          className="px-3 py-1 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer"
-                        >
-                          Switch
-                        </button>
-                      )}
+                          }
+                        }}
+                        className="flex items-center gap-3 flex-1 text-left min-w-0 cursor-pointer"
+                      >
+                        <img
+                          src={user.avatar}
+                          alt={user.name}
+                          referrerPolicy="no-referrer"
+                          className="w-10 h-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm text-neutral-900 dark:text-white truncate">
+                            @{user.username}
+                          </p>
+                          <p className="text-xs text-neutral-500 truncate">{user.name}</p>
+                        </div>
+                      </button>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isCurrent ? (
+                          <span className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2.5 py-1 rounded-full">
+                            <Check size={14} className="stroke-[3]" /> Active
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                switchProfile(user);
+                                onClose();
+                              }}
+                              className="px-3 py-1 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer"
+                            >
+                              Switch
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeSavedAccount(user.id);
+                              }}
+                              title="Remove account from device"
+                              className="p-1 text-neutral-400 hover:text-rose-500 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+
+              {savedAccounts.filter((u) => u && u.id && u.id !== 'guest_user').length <= 1 && (
+                <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800 text-center">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    No other accounts are currently logged in on this device.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
