@@ -3,9 +3,15 @@ import { config } from './env.config';
 export const swaggerSpec = {
   openapi: '3.0.3',
   info: {
+<<<<<<< HEAD
     title: '100gram Backend Architecture API',
     version: '1.0.0',
     description: `Scalable Enterprise-grade RESTful API specification for 100gram.
+=======
+    title: 'InstaVibe Backend Architecture API',
+    version: '1.0.0',
+    description: `Scalable Enterprise-grade RESTful API specification for InstaVibe.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     
 ### Architectural Highlights:
 - **Modular Layering**: Controllers -> Services -> Repositories -> Database Pool with Transactions
@@ -14,7 +20,11 @@ export const swaggerSpec = {
 - **Observability**: Structured JSON logging, Request Correlation IDs (\`x-request-id\`), Performance metrics
 - **Validation**: Strict schema validation powered by Zod`,
     contact: {
+<<<<<<< HEAD
       name: '100gram Engineering Team',
+=======
+      name: 'InstaVibe Engineering Team',
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       url: config.app.clientUrl,
     },
   },

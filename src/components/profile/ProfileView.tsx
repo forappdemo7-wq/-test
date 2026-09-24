@@ -106,7 +106,11 @@ export const ProfileView: React.FC = () => {
     if (navigator.share) {
       try {
         await navigator.share({
+<<<<<<< HEAD
           title: `${currentUser.name} (@${currentUser.username}) on 100gram`,
+=======
+          title: `${currentUser.name} (@${currentUser.username}) on InstaVibe`,
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           url: profileUrl,
         });
         return;

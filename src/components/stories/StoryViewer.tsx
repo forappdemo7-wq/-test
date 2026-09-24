@@ -500,7 +500,11 @@ export const StoryViewer: React.FC = () => {
       <div className="absolute top-4 inset-x-4 sm:inset-x-8 flex items-center justify-between z-40 pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-2">
           <span className="text-xl font-bold tracking-tight text-white font-serif italic drop-shadow-md">
+<<<<<<< HEAD
             100gram
+=======
+            InstaVibe
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           </span>
         </div>
 

@@ -247,7 +247,11 @@ export function generateTotpSecret(): { secret: string; uri: string } {
   for (let i = 0; i < 16; i++) {
     secret += base32Chars[bytes[i] % 32];
   }
+<<<<<<< HEAD
   const uri = `otpauth://totp/100gram:account?secret=${secret}&issuer=100gram&algorithm=SHA1&digits=6&period=30`;
+=======
+  const uri = `otpauth://totp/InstaVibe:account?secret=${secret}&issuer=InstaVibe&algorithm=SHA1&digits=6&period=30`;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   return { secret, uri };
 }
 

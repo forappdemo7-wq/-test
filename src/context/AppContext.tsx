@@ -27,7 +27,10 @@ import {
   AudioTrack,
 } from '../types';
 import confetti from 'canvas-confetti';
+<<<<<<< HEAD
 import { POPULAR_SOUNDTRACKS } from '../data/trendingAudio';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 import {
   storeAuthSession,
   getStoredAccessToken,
@@ -61,7 +64,10 @@ import {
   markAllNotificationsReadInFirestore,
   deleteNotificationFromFirestore,
 } from '../lib/firestoreNotifications';
+<<<<<<< HEAD
 import { STORAGE_KEYS, safeGetJSON, safeSetJSON, safeRemove } from '../constants/storage';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 interface SignUpData {
   username: string;
@@ -239,12 +245,16 @@ interface AppContextType {
       replyTo?: any;
       sharedPost?: any;
       isVanish?: boolean;
+<<<<<<< HEAD
       isNoteReply?: boolean;
       noteContext?: any;
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     }
   ) => Promise<void>;
   deleteMessage: (threadId: string, messageId: string) => Promise<void>;
   updateUserNote: (text: string, emoji?: string) => void;
+<<<<<<< HEAD
   publishUserNote: (
     text: string,
     emoji?: string,
@@ -274,6 +284,8 @@ interface AppContextType {
   setPreselectedAudioTrack: (track: AudioTrack | null) => void;
   openCreateWithAudio: (track: AudioTrack, createType?: 'post' | 'reel') => void;
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   updateChatTheme: (threadId: string, theme: ChatTheme) => Promise<void>;
   moveThreadCategory: (threadId: string, category: 'primary' | 'general' | 'requests') => void;
   toggleMuteThread: (threadId: string) => void;
@@ -380,6 +392,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
+<<<<<<< HEAD
     const u = safeGetJSON<User | null>(STORAGE_KEYS.AUTH_USER, null);
     if (u && u.id && u.id !== 'guest_user') {
       if (u.username?.toLowerCase().includes('demo')) {
@@ -387,6 +400,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return null;
       }
       return u;
+=======
+    try {
+      const saved = localStorage.getItem('instavibe_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u && u.id && u.id !== 'guest_user') {
+          if (u.username?.toLowerCase().includes('demo')) {
+            localStorage.removeItem('instavibe_user');
+            return null;
+          }
+          return u;
+        }
+      }
+    } catch {
+      // ignore
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     }
     return null;
   });
@@ -394,6 +423,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const isAuthenticated = Boolean(currentUser && currentUser.id && currentUser.id !== 'guest_user');
 
   const [savedAccounts, setSavedAccounts] = useState<User[]>(() => {
+<<<<<<< HEAD
     const saved = safeGetJSON<User[]>(STORAGE_KEYS.SAVED_ACCOUNTS, []);
     if (saved && saved.length > 0) return saved;
 
@@ -402,6 +432,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       safeSetJSON(STORAGE_KEYS.SAVED_ACCOUNTS, [single]);
       return [single];
     }
+=======
+    try {
+      const single = localStorage.getItem('instavibe_user');
+      if (single) {
+        const u = JSON.parse(single);
+        if (
+          u &&
+          u.id &&
+          u.id !== 'guest_user' &&
+          !u.username?.toLowerCase().includes('demo')
+        ) {
+          localStorage.setItem('instavibe_saved_accounts', JSON.stringify([u]));
+          return [u];
+        }
+      }
+    } catch {}
+    localStorage.removeItem('instavibe_saved_accounts');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return [];
   });
 
@@ -415,6 +463,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [hasMoreReels, setHasMoreReels] = useState(true);
   const [reelsPage, setReelsPage] = useState(1);
   const [threads, setThreads] = useState<ChatThread[]>([]);
+<<<<<<< HEAD
 
   // Instagram Notes & Audio Hub State
   const [activeAudioTrack, setActiveAudioTrack] = useState<AudioTrack | null>(null);
@@ -437,30 +486,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedBlocked) return savedBlocked;
       return u.blockedUserIds || [];
     }
+=======
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>(() => {
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const savedBlocked = localStorage.getItem(`instavibe_blocked_users_${u.id}`);
+          if (savedBlocked) return JSON.parse(savedBlocked);
+          return u.blockedUserIds || [];
+        }
+      }
+    } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return [];
   });
 
   const [closeFriendIds, setCloseFriendIds] = useState<string[]>(() => {
+<<<<<<< HEAD
     const u = safeGetJSON<User | null>(STORAGE_KEYS.AUTH_USER, null);
     if (u && u.id && u.id !== 'guest_user') {
       return safeGetJSON<string[]>(`${STORAGE_KEYS.CLOSE_FRIENDS_PREFIX}${u.id}`, []);
     }
+=======
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const saved = localStorage.getItem(`instavibe_close_friends_${u.id}`);
+          if (saved) return JSON.parse(saved);
+        }
+      }
+    } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return [];
   });
 
   const [restrictedUserIds, setRestrictedUserIds] = useState<string[]>(() => {
+<<<<<<< HEAD
     const u = safeGetJSON<User | null>(STORAGE_KEYS.AUTH_USER, null);
     if (u && u.id && u.id !== 'guest_user') {
       return safeGetJSON<string[]>(`${STORAGE_KEYS.RESTRICTED_USERS_PREFIX}${u.id}`, []);
     }
+=======
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const saved = localStorage.getItem(`instavibe_restricted_users_${u.id}`);
+          if (saved) return JSON.parse(saved);
+        }
+      }
+    } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return [];
   });
 
   const [pinnedThreadIds, setPinnedThreadIds] = useState<string[]>(() => {
+<<<<<<< HEAD
     const u = safeGetJSON<User | null>(STORAGE_KEYS.AUTH_USER, null);
     if (u && u.id && u.id !== 'guest_user') {
       return safeGetJSON<string[]>(`${STORAGE_KEYS.PINNED_THREADS_PREFIX}${u.id}`, []);
     }
+=======
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const savedPinned = localStorage.getItem(`instavibe_pinned_threads_${u.id}`);
+          if (savedPinned) return JSON.parse(savedPinned);
+        }
+      }
+    } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return [];
   });
 
@@ -469,12 +572,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Drafts & Scheduled Posts state
   const [drafts, setDrafts] = useState<PostDraft[]>(() => {
+<<<<<<< HEAD
     const u = safeGetJSON<User | null>(STORAGE_KEYS.AUTH_USER, null);
     if (u && u.id && u.id !== 'guest_user') {
       const userDrafts = safeGetJSON<PostDraft[] | null>(`${STORAGE_KEYS.DRAFTS_PREFIX}${u.id}`, null);
       if (userDrafts) return userDrafts;
     }
     return safeGetJSON<PostDraft[]>(STORAGE_KEYS.GENERIC_DRAFTS, []);
+=======
+    try {
+      const savedUserStr = localStorage.getItem('instavibe_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.id && u.id !== 'guest_user') {
+          const savedDrafts = localStorage.getItem(`instavibe_drafts_${u.id}`);
+          if (savedDrafts) return JSON.parse(savedDrafts);
+        }
+      }
+      const genericDrafts = localStorage.getItem('instavibe_drafts');
+      if (genericDrafts) return JSON.parse(genericDrafts);
+    } catch {}
+    return [];
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   });
 
   // Pending follow requests for private accounts
@@ -502,7 +621,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setNotificationPermission(perm);
         if (perm === 'granted') {
           try {
+<<<<<<< HEAD
             new Notification('100gram Notifications Enabled', {
+=======
+            new Notification('InstaVibe Notifications Enabled', {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               body: 'You will receive notifications for direct messages and interactions.',
               icon: '/favicon.ico',
             });
@@ -528,9 +651,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next = prev.includes(threadId)
         ? prev.filter((id) => id !== threadId)
         : [threadId, ...prev];
+<<<<<<< HEAD
       if (currentUser?.id && currentUser.id !== 'guest_user') {
         safeSetJSON(`${STORAGE_KEYS.PINNED_THREADS_PREFIX}${currentUser.id}`, next);
       }
+=======
+      try {
+        if (currentUser?.id && currentUser.id !== 'guest_user') {
+          localStorage.setItem(`instavibe_pinned_threads_${currentUser.id}`, JSON.stringify(next));
+        }
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return next;
     });
 
@@ -582,13 +713,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const persistSavedAccount = (user: User) => {
     if (!user || !user.id || user.id === 'guest_user') return;
     setSavedAccounts([user]);
+<<<<<<< HEAD
     safeSetJSON(STORAGE_KEYS.SAVED_ACCOUNTS, [user]);
+=======
+    try {
+      localStorage.setItem('instavibe_saved_accounts', JSON.stringify([user]));
+    } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   };
 
   const removeSavedAccount = (userId: string) => {
     setSavedAccounts((prev) => {
       const updated = prev.filter((u) => u.id !== userId);
+<<<<<<< HEAD
       safeSetJSON(STORAGE_KEYS.SAVED_ACCOUNTS, updated);
+=======
+      try {
+        localStorage.setItem('instavibe_saved_accounts', JSON.stringify(updated));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return updated;
     });
 
@@ -728,6 +871,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
 
+<<<<<<< HEAD
       // Fetch active Instagram community notes
       try {
         const notesRes = await fetch(`/api/notes?currentUserId=${currentUser?.id || ''}`);
@@ -760,10 +904,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Notes fetching error:', err);
       }
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       // Explicit Authenticated User Lookup: strictly fetch the current user's own profile
       if (currentUser?.id && currentUser.id !== 'guest_user') {
         try {
           const authUserRes = await fetch(`/api/users/${currentUser.id}?currentUserId=${currentUser.id}`);
+<<<<<<< HEAD
           if (authUserRes.status === 404) {
             // Stale user in local storage that no longer exists in DB
             setCurrentUser(null);
@@ -771,6 +918,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             safeRemove(STORAGE_KEYS.SAVED_ACCOUNTS);
             return;
           }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           if (authUserRes.ok) {
             const authUserData = await safeJson(authUserRes);
             if (authUserData && authUserData.id === currentUser.id) {
@@ -787,7 +936,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               ) {
                 const merged = { ...currentUser, ...authUserData, isPrivate: serverIsPrivate };
                 setCurrentUser(merged);
+<<<<<<< HEAD
                 safeSetJSON(STORAGE_KEYS.AUTH_USER, merged);
+=======
+                localStorage.setItem('instavibe_user', JSON.stringify(merged));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               }
             }
           }
@@ -808,7 +961,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (Array.isArray(cfData)) {
               const ids = cfData.map((u: any) => u.id || u);
               setCloseFriendIds(ids);
+<<<<<<< HEAD
               safeSetJSON(`${STORAGE_KEYS.CLOSE_FRIENDS_PREFIX}${currentUser.id}`, ids);
+=======
+              localStorage.setItem(`instavibe_close_friends_${currentUser.id}`, JSON.stringify(ids));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             }
           }
 
@@ -819,7 +976,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (Array.isArray(ruData)) {
               const ids = ruData.map((u: any) => u.id || u);
               setRestrictedUserIds(ids);
+<<<<<<< HEAD
               safeSetJSON(`${STORAGE_KEYS.RESTRICTED_USERS_PREFIX}${currentUser.id}`, ids);
+=======
+              localStorage.setItem(`instavibe_restricted_users_${currentUser.id}`, JSON.stringify(ids));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             }
           }
         } catch (e) {
@@ -910,7 +1071,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Listen to current user's blocked users
     const unsubBlocked = listenToBlockedUsers(currentUser.id, (blocked) => {
       setBlockedUserIds(blocked);
+<<<<<<< HEAD
       safeSetJSON(`${STORAGE_KEYS.BLOCKED_USERS_PREFIX}${currentUser.id}`, blocked);
+=======
+      try {
+        localStorage.setItem(`instavibe_blocked_users_${currentUser.id}`, JSON.stringify(blocked));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     });
 
     return () => {
@@ -994,7 +1161,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setThreads([]);
         setNotifications([]);
         setCurrentUser(data.user);
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, data.user);
+=======
+        localStorage.setItem('instavibe_user', JSON.stringify(data.user));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         persistSavedAccount(data.user);
         syncUserToFirestore(data.user);
         celebrateAction();
@@ -1036,7 +1207,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setNotifications([]);
         setCurrentUser(data.user);
         setAvailableProfiles((prev) => [data.user, ...prev]);
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, data.user);
+=======
+        localStorage.setItem('instavibe_user', JSON.stringify(data.user));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         persistSavedAccount(data.user);
         syncUserToFirestore(data.user);
         celebrateAction();
@@ -1071,7 +1246,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setThreads([]);
         setNotifications([]);
         setCurrentUser(data.user);
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, data.user);
+=======
+        localStorage.setItem('instavibe_user', JSON.stringify(data.user));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         persistSavedAccount(data.user);
         syncUserToFirestore(data.user);
         celebrateAction();
@@ -1106,7 +1285,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setThreads([]);
         setNotifications([]);
         setCurrentUser(data.user);
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, data.user);
+=======
+        localStorage.setItem('instavibe_user', JSON.stringify(data.user));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         persistSavedAccount(data.user);
         syncUserToFirestore(data.user);
         celebrateAction();
@@ -1127,7 +1310,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setThreads([]);
         setNotifications([]);
         setCurrentUser(result.user);
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, result.user);
+=======
+        localStorage.setItem('instavibe_user', JSON.stringify(result.user));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         persistSavedAccount(result.user);
         syncUserToFirestore(result.user);
         celebrateAction();
@@ -1146,7 +1333,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const res = await registerPasskeyOnDevice(currentUser.id, currentUser.name || currentUser.username);
     if (res.success && res.credentialId) {
+<<<<<<< HEAD
       safeSetJSON(STORAGE_KEYS.LAST_PASSKEY_ID, res.credentialId);
+=======
+      localStorage.setItem('instavibe_last_passkey_id', res.credentialId);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     }
     return res;
   };
@@ -1168,7 +1359,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setThreads([]);
         setNotifications([]);
         setCurrentUser(data.user);
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, data.user);
+=======
+        localStorage.setItem('instavibe_user', JSON.stringify(data.user));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         persistSavedAccount(data.user);
         syncUserToFirestore(data.user);
         celebrateAction();
@@ -1204,7 +1399,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     clearAuthSession();
+<<<<<<< HEAD
     safeRemove(STORAGE_KEYS.AUTH_USER);
+=======
+    localStorage.removeItem('instavibe_user');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     setActiveThreadId(null);
     setThreads([]);
     setNotifications([]);
@@ -1271,7 +1470,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Update current user
       const updated = { ...currentUser, isEmailVerified: true };
       setCurrentUser(updated);
+<<<<<<< HEAD
       safeSetJSON(STORAGE_KEYS.AUTH_USER, updated);
+=======
+      localStorage.setItem('instavibe_user', JSON.stringify(updated));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return { success: true, message: data.message };
     } catch (err: any) {
       return { success: false, error: err.message || 'Network error' };
@@ -1389,7 +1592,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const updated = { ...currentUser, twoFactorEnabled: true };
       setCurrentUser(updated);
+<<<<<<< HEAD
       safeSetJSON(STORAGE_KEYS.AUTH_USER, updated);
+=======
+      localStorage.setItem('instavibe_user', JSON.stringify(updated));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Network error' };
@@ -1409,7 +1616,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const updated = { ...currentUser, twoFactorEnabled: false };
       setCurrentUser(updated);
+<<<<<<< HEAD
       safeSetJSON(STORAGE_KEYS.AUTH_USER, updated);
+=======
+      localStorage.setItem('instavibe_user', JSON.stringify(updated));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Network error' };
@@ -1446,7 +1657,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setThreads([]);
     setNotifications([]);
     setCurrentUser(user);
+<<<<<<< HEAD
     safeSetJSON(STORAGE_KEYS.AUTH_USER, user);
+=======
+    localStorage.setItem('instavibe_user', JSON.stringify(user));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     persistSavedAccount(user);
     syncUserToFirestore(user);
   };
@@ -1455,7 +1670,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!currentUser) return;
     const updatedUser = { ...currentUser, ...updated };
     setCurrentUser(updatedUser);
+<<<<<<< HEAD
     safeSetJSON(STORAGE_KEYS.AUTH_USER, updatedUser);
+=======
+    localStorage.setItem('instavibe_user', JSON.stringify(updatedUser));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     persistSavedAccount(updatedUser);
     syncUserToFirestore(updatedUser);
     setAvailableProfiles((prev) =>
@@ -1473,7 +1692,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const serverUser = data.user || data;
         const merged = { ...updatedUser, ...serverUser, isPrivate: serverUser.isPrivate ?? serverUser.is_private ?? updatedUser.isPrivate };
         setCurrentUser(merged);
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, merged);
+=======
+        localStorage.setItem('instavibe_user', JSON.stringify(merged));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         persistSavedAccount(merged);
       }
     } catch (e) {
@@ -1756,10 +1979,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Drafts & Post Scheduling Actions
   const persistDrafts = (newDrafts: PostDraft[]) => {
     setDrafts(newDrafts);
+<<<<<<< HEAD
     if (currentUser?.id && currentUser.id !== 'guest_user') {
       safeSetJSON(`${STORAGE_KEYS.DRAFTS_PREFIX}${currentUser.id}`, newDrafts);
     } else {
       safeSetJSON(STORAGE_KEYS.GENERIC_DRAFTS, newDrafts);
+=======
+    try {
+      if (currentUser?.id && currentUser.id !== 'guest_user') {
+        localStorage.setItem(`instavibe_drafts_${currentUser.id}`, JSON.stringify(newDrafts));
+      } else {
+        localStorage.setItem('instavibe_drafts', JSON.stringify(newDrafts));
+      }
+    } catch (e) {
+      console.warn('Failed to persist drafts to local storage:', e);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     }
   };
 
@@ -2369,8 +2603,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       replyTo?: any;
       sharedPost?: any;
       isVanish?: boolean;
+<<<<<<< HEAD
       isNoteReply?: boolean;
       noteContext?: any;
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     }
   ) => {
     if (!currentUser) return;
@@ -2441,8 +2678,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       replyTo: options?.replyTo,
       sharedPost: options?.sharedPost,
       isVanish: !!options?.isVanish,
+<<<<<<< HEAD
       isNoteReply: !!options?.isNoteReply,
       noteContext: options?.noteContext,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       isDeleted: false,
       status: 'sent',
       timestamp: 'Just now',
@@ -2680,6 +2920,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+<<<<<<< HEAD
   const publishUserNote = async (
     text: string,
     emoji: string = '💭',
@@ -2843,6 +3084,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsCreateOpen(true);
   };
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   const updateChatTheme = async (threadId: string, theme: ChatTheme) => {
     // 1. Optimistic update
     setThreads((prev) =>
@@ -2864,7 +3107,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBlockedUserIds((prev) => {
       if (prev.includes(targetUserId)) return prev;
       const next = [...prev, targetUserId];
+<<<<<<< HEAD
       safeSetJSON(`${STORAGE_KEYS.BLOCKED_USERS_PREFIX}${currentUser.id}`, next);
+=======
+      try {
+        localStorage.setItem(`instavibe_blocked_users_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return next;
     });
 
@@ -2897,7 +3146,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 1. Optimistic update
     setBlockedUserIds((prev) => {
       const next = prev.filter((id) => id !== targetUserId);
+<<<<<<< HEAD
       safeSetJSON(`${STORAGE_KEYS.BLOCKED_USERS_PREFIX}${currentUser.id}`, next);
+=======
+      try {
+        localStorage.setItem(`instavibe_blocked_users_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return next;
     });
 
@@ -2937,7 +3192,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...prev,
         followersCount: Math.max(0, (prev.followersCount || 1) - 1),
       };
+<<<<<<< HEAD
       safeSetJSON(STORAGE_KEYS.AUTH_USER, updated);
+=======
+      try {
+        localStorage.setItem('instavibe_user', JSON.stringify(updated));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return updated;
     });
 
@@ -2960,7 +3221,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isFriend = prev.includes(friendId);
       nextState = !isFriend;
       const next = isFriend ? prev.filter((id) => id !== friendId) : [...prev, friendId];
+<<<<<<< HEAD
       safeSetJSON(`${STORAGE_KEYS.CLOSE_FRIENDS_PREFIX}${currentUser.id}`, next);
+=======
+      try {
+        localStorage.setItem(`instavibe_close_friends_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return next;
     });
 
@@ -2980,7 +3247,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!currentUser?.id) return;
     setCloseFriendIds(friendIds);
     try {
+<<<<<<< HEAD
       safeSetJSON(`${STORAGE_KEYS.CLOSE_FRIENDS_PREFIX}${currentUser.id}`, friendIds);
+=======
+      localStorage.setItem(`instavibe_close_friends_${currentUser.id}`, JSON.stringify(friendIds));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       await fetch(`/api/users/${currentUser.id}/close-friends`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3000,7 +3271,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRestrictedUserIds((prev) => {
       if (prev.includes(targetUserId)) return prev;
       const next = [...prev, targetUserId];
+<<<<<<< HEAD
       safeSetJSON(`${STORAGE_KEYS.RESTRICTED_USERS_PREFIX}${currentUser.id}`, next);
+=======
+      try {
+        localStorage.setItem(`instavibe_restricted_users_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return next;
     });
 
@@ -3025,7 +3302,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!targetUserId || !currentUser?.id) return;
     setRestrictedUserIds((prev) => {
       const next = prev.filter((id) => id !== targetUserId);
+<<<<<<< HEAD
       safeSetJSON(`${STORAGE_KEYS.RESTRICTED_USERS_PREFIX}${currentUser.id}`, next);
+=======
+      try {
+        localStorage.setItem(`instavibe_restricted_users_${currentUser.id}`, JSON.stringify(next));
+      } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return next;
     });
 
@@ -3411,7 +3694,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...prev,
           followingCount: nextFollowingCount,
         };
+<<<<<<< HEAD
         safeSetJSON(STORAGE_KEYS.AUTH_USER, updated);
+=======
+        try {
+          localStorage.setItem('instavibe_user', JSON.stringify(updated));
+        } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         return updated;
       });
     }
@@ -3667,6 +3956,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         reactToMessage,
         deleteMessageForEveryone,
         updateUserNote,
+<<<<<<< HEAD
         publishUserNote,
         deleteUserNote,
         sendNoteReply,
@@ -3677,6 +3967,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         preselectedAudioTrack,
         setPreselectedAudioTrack,
         openCreateWithAudio,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         updateChatTheme,
         moveThreadCategory,
         toggleMuteThread,

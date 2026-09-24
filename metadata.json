@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "name": "100gram",
   "description": "A parody social media platform with interactive stories, feeds, reels, direct messages, photo filters, and explore discovery.",
+=======
+  "name": "InstaVibe",
+  "description": "A responsive, feature-rich social media platform with interactive stories, feeds, reels, direct messages, photo filters, and explore discovery.",
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

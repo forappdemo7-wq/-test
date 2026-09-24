@@ -1,10 +1,18 @@
 import { User, UserSession, TrustedDevice, LoginActivityLog, SuspiciousLoginAlert, AuthTokens } from '../types';
+<<<<<<< HEAD
 import { STORAGE_KEYS } from '../constants/storage';
 
 const ACCESS_TOKEN_KEY = STORAGE_KEYS.ACCESS_TOKEN;
 const REFRESH_TOKEN_KEY = STORAGE_KEYS.REFRESH_TOKEN;
 const SESSION_ID_KEY = STORAGE_KEYS.SESSION_ID;
 const REMEMBER_ME_KEY = STORAGE_KEYS.REMEMBER_ME;
+=======
+
+const ACCESS_TOKEN_KEY = 'instavibe_access_token';
+const REFRESH_TOKEN_KEY = 'instavibe_refresh_token';
+const SESSION_ID_KEY = 'instavibe_session_id';
+const REMEMBER_ME_KEY = 'instavibe_remember_me';
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 // Device & Browser Fingerprinting Helper
 export function getClientDeviceInfo() {
@@ -55,7 +63,11 @@ export function getClientDeviceInfo() {
     ctx.fillStyle = '#f60';
     ctx.fillRect(125, 1, 62, 20);
     ctx.fillStyle = '#069';
+<<<<<<< HEAD
     ctx.fillText('100gram Security', 2, 15);
+=======
+    ctx.fillText('InstaVibe Security', 2, 15);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     canvasHash = canvas.toDataURL().slice(-16);
   }
 
@@ -145,7 +157,11 @@ export async function registerPasskeyOnDevice(userId: string, accountName: strin
     const credential = (await navigator.credentials.create({
       publicKey: {
         challenge: challengeBuffer,
+<<<<<<< HEAD
         rp: { name: '100gram' },
+=======
+        rp: { name: 'InstaVibe' },
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         user: {
           id: userIdBuffer,
           name: accountName,
@@ -228,12 +244,20 @@ export async function authenticateWithPasskey(rememberMe: boolean = true): Promi
       }
     } catch (e) {
       // In sandbox/iframe, fallback to stored passkey token if available
+<<<<<<< HEAD
       const storedCred = localStorage.getItem(STORAGE_KEYS.LAST_PASSKEY_ID) || localStorage.getItem('instavibe_last_passkey_id');
+=======
+      const storedCred = localStorage.getItem('instavibe_last_passkey_id');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       if (storedCred) credentialId = storedCred;
     }
 
     if (!credentialId) {
+<<<<<<< HEAD
       const storedCred = localStorage.getItem(STORAGE_KEYS.LAST_PASSKEY_ID) || localStorage.getItem('instavibe_last_passkey_id');
+=======
+      const storedCred = localStorage.getItem('instavibe_last_passkey_id');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       if (storedCred) credentialId = storedCred;
       else {
         return { success: false, error: 'No passkey credential detected on this device. Please sign in with password first.' };

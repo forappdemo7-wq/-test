@@ -12,7 +12,11 @@ export class DocsController {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
   <title>100gram Scalable API Documentation</title>
+=======
+  <title>InstaVibe Scalable API Documentation</title>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
   <style>
     body { margin: 0; background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -27,7 +31,11 @@ export class DocsController {
 </head>
 <body>
   <div class="header-banner">
+<<<<<<< HEAD
     <h1>100gram Backend Architecture API</h1>
+=======
+    <h1>InstaVibe Backend Architecture API</h1>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     <p>Enterprise scalable RESTful architecture with Controllers, Services, Repositories, Redis Cache, Worker Queue & Gemini AI</p>
   </div>
   <div id="swagger-ui"></div>

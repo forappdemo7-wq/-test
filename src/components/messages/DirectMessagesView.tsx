@@ -26,10 +26,14 @@ import {
 import { useApp } from '../../context/AppContext';
 import { ChatConversation } from './ChatConversation';
 import { NewChatModal } from './NewChatModal';
+<<<<<<< HEAD
 import { NotesTray } from '../notes/NotesTray';
 import { NoteComposerModal } from '../notes/NoteComposerModal';
 import { NoteActionModal } from '../notes/NoteActionModal';
 import { User, ChatThread, AudioTrack } from '../../types';
+=======
+import { User, ChatThread } from '../../types';
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 import { getDeterministicChatId } from '../../lib/firestoreChat';
 
 export const DirectMessagesView: React.FC = () => {
@@ -43,10 +47,13 @@ export const DirectMessagesView: React.FC = () => {
     markThreadAsSeen,
     currentUser,
     updateUserNote,
+<<<<<<< HEAD
     publishUserNote,
     deleteUserNote,
     sendNoteReply,
     openAudioDetail,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     availableProfiles,
     savedAccounts,
     switchProfile,
@@ -61,6 +68,7 @@ export const DirectMessagesView: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [selectedTab, setSelectedTab] = useState<'primary' | 'general' | 'requests'>('primary');
+<<<<<<< HEAD
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
@@ -70,6 +78,15 @@ export const DirectMessagesView: React.FC = () => {
   const usersWithNotes = availableProfiles.filter(
     (p) => p.id !== currentUser?.id && p.note?.text
   );
+=======
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [noteInput, setNoteInput] = useState(currentUser?.note?.text || '');
+  const [noteEmoji, setNoteEmoji] = useState(currentUser?.note?.emoji || '✨');
+  const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [selectedNoteUser, setSelectedNoteUser] = useState<User | null>(null);
+  const [noteReplyText, setNoteReplyText] = useState('');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
   let activeThread = threads.find(
     (t) => t.id === activeThreadId || (activeChatUser && t.participant.id === activeChatUser.id)
@@ -121,10 +138,31 @@ export const DirectMessagesView: React.FC = () => {
       return 0;
     });
 
+<<<<<<< HEAD
+=======
+  const handleSaveNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (noteInput.trim()) {
+      updateUserNote(noteInput.trim(), noteEmoji);
+      setIsEditingNote(false);
+    }
+  };
+
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   const handleStartChatWithUser = (user: User) => {
     openChatWithUser(user);
   };
 
+<<<<<<< HEAD
+=======
+  const handleSendNoteReply = async (user: User) => {
+    if (!noteReplyText.trim()) return;
+    openChatWithUser(user);
+    setSelectedNoteUser(null);
+    setNoteReplyText('');
+  };
+
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   // If viewing an active conversation:
   if (activeThread) {
     return (
@@ -259,6 +297,7 @@ export const DirectMessagesView: React.FC = () => {
         </div>
       )}
 
+<<<<<<< HEAD
       {/* Instagram Notes Tray (Top Horizontal Scroll with Sound & Thought Bubbles) */}
       <NotesTray
         currentUser={currentUser}
@@ -297,6 +336,205 @@ export const DirectMessagesView: React.FC = () => {
           }}
           onOpenAudioHub={(track) => openAudioDetail(track)}
         />
+=======
+      {/* Instagram Notes Tray (Top Horizontal Scroll) */}
+      <div className="flex items-start gap-4 overflow-x-auto no-scrollbar py-2 px-1">
+        {/* Current User Note / Add Note */}
+        <div className="flex flex-col items-center flex-shrink-0 cursor-pointer group">
+          <div
+            onClick={() => {
+              setNoteInput(currentUser?.note?.text || '');
+              setNoteEmoji(currentUser?.note?.emoji || '✨');
+              setIsEditingNote(true);
+            }}
+            className="relative"
+          >
+            {/* Note Bubble Tag */}
+            {currentUser?.note?.text ? (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200/90 dark:border-neutral-700 shadow-soft-sm px-2.5 py-1 rounded-2xl text-[10px] font-semibold flex items-center gap-1 max-w-[90px] truncate animate-in zoom-in-90">
+                <span>{currentUser.note.emoji || '💭'}</span>
+                <span className="truncate">{currentUser.note.text}</span>
+              </div>
+            ) : (
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-soft-xs flex items-center gap-0.5">
+                <Plus size={10} /> Note
+              </div>
+            )}
+
+            <img
+              src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+              alt={currentUser?.name || currentUser?.username || 'User'}
+              referrerPolicy="no-referrer"
+              className="w-16 h-16 rounded-full object-cover border-2 border-neutral-200 dark:border-neutral-800 group-hover:scale-105 transition-transform"
+            />
+          </div>
+          <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 mt-1 truncate max-w-[70px]">
+            Your note
+          </span>
+        </div>
+
+        {/* Friend Notes List */}
+        {availableProfiles
+          .filter((p) => p.id !== currentUser?.id && p.note?.text)
+          .map((friend) => (
+            <div
+              key={friend.id}
+              onClick={() => setSelectedNoteUser(friend)}
+              className="flex flex-col items-center flex-shrink-0 cursor-pointer group"
+            >
+              <div className="relative">
+                {/* Note speech bubble */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200/90 dark:border-neutral-700 shadow-soft-sm px-2.5 py-1 rounded-2xl text-[10px] font-semibold flex items-center gap-1 max-w-[90px] truncate group-hover:scale-105 transition-transform">
+                  <span>{friend.note?.emoji || '💭'}</span>
+                  <span className="truncate">{friend.note?.text}</span>
+                </div>
+
+                <img
+                  src={friend.avatar}
+                  alt={friend.name}
+                  referrerPolicy="no-referrer"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-neutral-200 dark:border-neutral-800 group-hover:scale-105 transition-transform"
+                />
+                {isUserOnline(friend.id) && (
+                  <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-neutral-950" />
+                )}
+              </div>
+              <span className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 mt-1 truncate max-w-[70px]">
+                {friend.username}
+              </span>
+            </div>
+          ))}
+      </div>
+
+      {/* Note Reply Modal */}
+      {selectedNoteUser && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 w-full max-w-sm border border-neutral-200/80 dark:border-neutral-800 shadow-soft-xl space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={selectedNoteUser.avatar}
+                  alt={selectedNoteUser.name}
+                  referrerPolicy="no-referrer"
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div>
+                  <h4 className="text-xs font-bold text-neutral-900 dark:text-white">
+                    {selectedNoteUser.username}&apos;s note
+                  </h4>
+                  <p className="text-[11px] text-neutral-500">
+                    {selectedNoteUser.note?.emoji || '✨'} {selectedNoteUser.note?.text || 'Listening to music 🎧'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedNoteUser(null)}
+                className="p-1 text-neutral-400 hover:text-neutral-600 rounded-full cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 px-3.5 py-2.5 rounded-2xl">
+              <input
+                type="text"
+                value={noteReplyText}
+                onChange={(e) => setNoteReplyText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSendNoteReply(selectedNoteUser);
+                }}
+                placeholder={`Reply to ${selectedNoteUser.username}...`}
+                className="flex-1 text-xs sm:text-sm bg-transparent outline-none text-neutral-900 dark:text-white placeholder-neutral-400"
+                autoFocus
+              />
+              <button
+                onClick={() => handleSendNoteReply(selectedNoteUser)}
+                disabled={!noteReplyText.trim()}
+                className="p-1 text-blue-500 hover:text-blue-600 disabled:opacity-40 cursor-pointer active:scale-90"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+
+            <div className="flex justify-between items-center pt-1">
+              <button
+                onClick={() => {
+                  handleStartChatWithUser(selectedNoteUser);
+                  setSelectedNoteUser(null);
+                }}
+                className="text-xs font-semibold text-blue-500 hover:underline cursor-pointer"
+              >
+                Open full conversation
+              </button>
+              <button
+                onClick={() => setSelectedNoteUser(null)}
+                className="text-xs text-neutral-500 hover:text-neutral-700 cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Note Editor Modal */}
+      {isEditingNote && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-6 w-full max-w-sm border border-neutral-200/80 dark:border-neutral-800 shadow-soft-lg space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-neutral-900 dark:text-white">
+                Share a thought note
+              </h3>
+              <button
+                onClick={() => setIsEditingNote(false)}
+                className="p-1 text-neutral-400 hover:text-neutral-600 rounded-full cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Share what is on your mind. Friends will see your note at the top of their inbox for 24 hours.
+            </p>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={noteEmoji}
+                onChange={(e) => setNoteEmoji(e.target.value)}
+                title="Pick an emoji"
+                className="w-12 text-center text-lg p-2.5 rounded-2xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 outline-none"
+              />
+              <input
+                type="text"
+                value={noteInput}
+                onChange={(e) => setNoteInput(e.target.value)}
+                placeholder="Share a thought... (60 char max)"
+                maxLength={60}
+                className="flex-1 text-xs sm:text-sm p-3 rounded-2xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-white outline-none"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsEditingNote(false)}
+                className="px-4 py-2 rounded-2xl text-xs font-semibold text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNote}
+                className="px-5 py-2.5 rounded-2xl text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white cursor-pointer transition-all shadow-soft-xs active:scale-95"
+              >
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       )}
 
       {/* Search Input Bar */}

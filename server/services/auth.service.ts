@@ -56,7 +56,11 @@ export class AuthService {
       throw new ConflictError('Username is already taken');
     }
 
+<<<<<<< HEAD
     const email = data.email && data.email.trim() ? data.email.toLowerCase().trim() : `${username}@100gram.internal`;
+=======
+    const email = data.email && data.email.trim() ? data.email.toLowerCase().trim() : `${username}@instavibe.internal`;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     const existingEmail = await userRepository.findByEmail(email);
     if (existingEmail && existingEmail.username !== username) {
       throw new ConflictError('Email address is already registered');
@@ -307,7 +311,11 @@ export class AuthService {
 
   async setup2FA(userId: string) {
     const secret = 'JBSWY3DPEHPK3PXP';
+<<<<<<< HEAD
     const otpAuthUrl = `otpauth://totp/100gram:${userId}?secret=${secret}&issuer=100gram`;
+=======
+    const otpAuthUrl = `otpauth://totp/InstaVibe:${userId}?secret=${secret}&issuer=InstaVibe`;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return { secret, qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpAuthUrl)}` };
   }
 
@@ -328,8 +336,13 @@ export class AuthService {
   async passkeyRegisterOptions(userId: string) {
     return {
       challenge: 'random_challenge_' + Date.now(),
+<<<<<<< HEAD
       rp: { name: '100gram' },
       user: { id: userId, name: 'user', displayName: '100gram User' },
+=======
+      rp: { name: 'InstaVibe' },
+      user: { id: userId, name: 'user', displayName: 'InstaVibe User' },
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     };
   }
 

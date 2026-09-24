@@ -97,10 +97,17 @@ function requestLoggerMiddleware(req, res, next) {
 }
 
 // server/routes/index.ts
+<<<<<<< HEAD
 import { Router as Router13 } from "express";
 
 // server/routes/v1/index.ts
 import { Router as Router12 } from "express";
+=======
+import { Router as Router11 } from "express";
+
+// server/routes/v1/index.ts
+import { Router as Router10 } from "express";
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 // server/routes/v1/auth.routes.ts
 import { Router } from "express";
@@ -345,16 +352,23 @@ var UserRepository = class extends BaseRepository {
     const res = await query(
       `SELECT 
         u.*,
+<<<<<<< HEAD
         u.is_private as "isPrivate",
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         (SELECT COUNT(*)::int FROM posts WHERE user_id = u.id) as posts_count,
         (SELECT COUNT(*)::int FROM follows WHERE following_id = u.id) as followers_count,
         (SELECT COUNT(*)::int FROM follows WHERE follower_id = u.id) as following_count,
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
+<<<<<<< HEAD
         EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy",
         EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $2 AND target_id = u.id) as "hasRequestedFollow",
         EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $2 AND blocked_id = u.id) as "isBlocked",
         EXISTS(SELECT 1 FROM close_friends WHERE user_id = $2 AND friend_id = u.id) as "isCloseFriend",
         EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $2 AND restricted_id = u.id) as "isRestricted"
+=======
+        EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $2 AND blocked_id = u.id) as "isBlocked"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       FROM users u
       WHERE u.id = $1`,
       [targetUserId, currentUserId || "none"]
@@ -380,6 +394,7 @@ var UserRepository = class extends BaseRepository {
       followingId
     ]);
   }
+<<<<<<< HEAD
   async isFollowRequested(requesterId, targetId) {
     const res = await query("SELECT 1 FROM follow_requests WHERE requester_id = $1 AND target_id = $2", [
       requesterId,
@@ -442,15 +457,26 @@ var UserRepository = class extends BaseRepository {
         u.avatar, u.bio, u.website, u.category,
         u.is_verified as "isVerified",
         u.is_private as "isPrivate",
+=======
+  async getAllUsers(currentUserId, limit = 50) {
+    const res = await query(
+      `SELECT 
+        u.id, u.username, u.name, u.email, u.avatar, u.bio, u.website, u.category,
+        u.is_verified as "isVerified",
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         (SELECT COUNT(*)::int FROM posts WHERE user_id = u.id) as "postsCount",
         (SELECT COUNT(*)::int FROM follows WHERE following_id = u.id) as "followersCount",
         (SELECT COUNT(*)::int FROM follows WHERE follower_id = u.id) as "followingCount",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = u.id) as "isFollowing",
+<<<<<<< HEAD
         EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $1) as "isFollowedBy",
         EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $1 AND target_id = u.id) as "hasRequestedFollow",
         EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $1 AND blocked_id = u.id) as "isBlocked",
         EXISTS(SELECT 1 FROM close_friends WHERE user_id = $1 AND friend_id = u.id) as "isCloseFriend",
         EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $1 AND restricted_id = u.id) as "isRestricted"
+=======
+        EXISTS(SELECT 1 FROM blocked_users WHERE blocker_id = $1 AND blocked_id = u.id) as "isBlocked"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       FROM users u
       ORDER BY u.created_at ASC
       LIMIT $2`,
@@ -462,11 +488,15 @@ var UserRepository = class extends BaseRepository {
     const res = await query(
       `SELECT 
         u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified",
+<<<<<<< HEAD
         u.is_private as "isPrivate",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy",
         EXISTS(SELECT 1 FROM close_friends WHERE user_id = $2 AND friend_id = u.id) as "isCloseFriend",
         EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $2 AND restricted_id = u.id) as "isRestricted"
+=======
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       FROM follows f
       JOIN users u ON u.id = f.follower_id
       WHERE f.following_id = $1`,
@@ -478,11 +508,15 @@ var UserRepository = class extends BaseRepository {
     const res = await query(
       `SELECT 
         u.id, u.username, u.name, u.avatar, u.bio, u.is_verified as "isVerified",
+<<<<<<< HEAD
         u.is_private as "isPrivate",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing",
         EXISTS(SELECT 1 FROM follows WHERE follower_id = u.id AND following_id = $2) as "isFollowedBy",
         EXISTS(SELECT 1 FROM close_friends WHERE user_id = $2 AND friend_id = u.id) as "isCloseFriend",
         EXISTS(SELECT 1 FROM restricted_users WHERE user_id = $2 AND restricted_id = u.id) as "isRestricted"
+=======
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = u.id) as "isFollowing"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       FROM follows f
       JOIN users u ON u.id = f.following_id
       WHERE f.follower_id = $1`,
@@ -505,6 +539,7 @@ var UserRepository = class extends BaseRepository {
       [userId, blockedUserId]
     );
   }
+<<<<<<< HEAD
   async removeFollower(followingId, followerId) {
     await query("DELETE FROM follows WHERE follower_id = $1 AND following_id = $2", [
       followerId,
@@ -582,6 +617,8 @@ var UserRepository = class extends BaseRepository {
       [userId, targetId]
     );
   }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   async searchUsers(term, limit = 20) {
     const res = await query(
       `SELECT id, username, name, avatar, bio, is_verified, followers_count
@@ -1201,8 +1238,12 @@ var UpdateProfileSchema = z.object({
   bio: z.string().max(300).optional(),
   avatar: z.string().optional(),
   website: z.string().optional(),
+<<<<<<< HEAD
   category: z.string().optional(),
   isPrivate: z.boolean().optional()
+=======
+  category: z.string().optional()
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 });
 var FollowToggleSchema = z.object({
   currentUserId: z.string().min(1, "Current user ID is required")
@@ -1354,24 +1395,30 @@ router.post(
   authController.signup.bind(authController)
 );
 router.post(
+<<<<<<< HEAD
   "/register",
   rateLimiter({ max: 20 }),
   validate({ body: SignupSchema }),
   authController.signup.bind(authController)
 );
 router.post(
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   "/signin",
   rateLimiter({ max: 30 }),
   validate({ body: SigninSchema }),
   authController.signin.bind(authController)
 );
 router.post(
+<<<<<<< HEAD
   "/login",
   rateLimiter({ max: 30 }),
   validate({ body: SigninSchema }),
   authController.signin.bind(authController)
 );
 router.post(
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   "/refresh",
   validate({ body: RefreshTokenSchema }),
   authController.refreshToken.bind(authController)
@@ -1514,29 +1561,42 @@ var UserService = class {
     if (!user) {
       throw new NotFoundError("User profile");
     }
+<<<<<<< HEAD
     const isOwnProfile = Boolean(currentUserId && currentUserId === user.id);
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return {
       id: user.id,
       username: user.username,
       name: user.name,
+<<<<<<< HEAD
       email: isOwnProfile ? user.email : void 0,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       avatar: user.avatar,
       bio: user.bio || "",
       website: user.website || "",
       category: user.category || "",
       isVerified: user.is_verified || false,
+<<<<<<< HEAD
       isPrivate: Boolean(user.is_private || user.isPrivate),
       accountType: user.is_private || user.isPrivate ? "private" : "public",
       hasRequestedFollow: Boolean(user.hasRequestedFollow),
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       followersCount: parseInt(user.followers_count || "0", 10),
       followingCount: parseInt(user.following_count || "0", 10),
       postsCount: parseInt(user.posts_count || "0", 10),
       isFollowing: Boolean(user.isFollowing),
+<<<<<<< HEAD
       isFollowedBy: Boolean(user.isFollowedBy),
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       isBlocked: Boolean(user.isBlocked)
     };
   }
   async updateProfile(userId, updates) {
+<<<<<<< HEAD
     const payload = { ...updates };
     if (payload.isPrivate !== void 0) {
       payload.is_private = Boolean(payload.isPrivate);
@@ -1546,20 +1606,28 @@ var UserService = class {
       }
     }
     const updated = await userRepository.updateProfile(userId, payload);
+=======
+    const updated = await userRepository.updateProfile(userId, updates);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     if (!updated) {
       throw new NotFoundError("User");
     }
     await cacheService.delete(CacheKeys.user(userId));
+<<<<<<< HEAD
     return {
       ...updated,
       isPrivate: Boolean(updated.is_private),
       accountType: updated.is_private ? "private" : "public"
     };
+=======
+    return updated;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   }
   async toggleFollow(currentUserId, targetUserId) {
     if (!currentUserId || currentUserId === targetUserId) {
       throw new BadRequestError("Cannot follow self or invalid user ID");
     }
+<<<<<<< HEAD
     const targetUser = await userRepository.findById(targetUserId);
     if (!targetUser) {
       throw new NotFoundError("Target user");
@@ -1592,6 +1660,16 @@ var UserService = class {
       await userRepository.follow(currentUserId, targetUserId);
       newIsFollowing = true;
       newHasRequested = false;
+=======
+    const isFollowing = await userRepository.isFollowing(currentUserId, targetUserId);
+    let newIsFollowing = false;
+    if (isFollowing) {
+      await userRepository.unfollow(currentUserId, targetUserId);
+      newIsFollowing = false;
+    } else {
+      await userRepository.follow(currentUserId, targetUserId);
+      newIsFollowing = true;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       await jobQueue.add("DISPATCH_NOTIFICATION" /* DISPATCH_NOTIFICATION */, {
         recipientId: targetUserId,
         senderId: currentUserId,
@@ -1606,6 +1684,7 @@ var UserService = class {
     return {
       success: true,
       isFollowing: newIsFollowing,
+<<<<<<< HEAD
       hasRequestedFollow: newHasRequested,
       targetFollowersCount
     };
@@ -1671,6 +1750,18 @@ var UserService = class {
         }
       }
     }
+=======
+      targetFollowersCount
+    };
+  }
+  async getAllUsers(currentUserId, limit = 50) {
+    return userRepository.getAllUsers(currentUserId, limit);
+  }
+  async getFollowers(targetUserId, currentUserId) {
+    return userRepository.getFollowers(targetUserId, currentUserId);
+  }
+  async getFollowing(targetUserId, currentUserId) {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     return userRepository.getFollowing(targetUserId, currentUserId);
   }
   async blockUser(currentUserId, targetUserId) {
@@ -1687,6 +1778,7 @@ var UserService = class {
     await userRepository.unblockUser(currentUserId, targetUserId);
     return { success: true, isBlocked: false };
   }
+<<<<<<< HEAD
   async removeFollower(currentUserId, followerId) {
     if (!currentUserId || !followerId) {
       throw new BadRequestError("User ID and follower ID are required");
@@ -1735,6 +1827,8 @@ var UserService = class {
     await userRepository.unrestrictUser(currentUserId, targetUserId);
     return { success: true, isRestricted: false };
   }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   async search(term, limit = 20) {
     if (!term || !term.trim()) return [];
     return userRepository.searchUsers(term.trim(), limit);
@@ -1823,6 +1917,7 @@ var UserController = class {
       next(error);
     }
   }
+<<<<<<< HEAD
   async getPendingRequests(req, res, next) {
     try {
       const currentUserId = req.query.currentUserId || req.user?.id;
@@ -1852,6 +1947,8 @@ var UserController = class {
       next(error);
     }
   }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   async search(req, res, next) {
     try {
       const term = req.query.q || req.query.query || "";
@@ -1862,6 +1959,7 @@ var UserController = class {
       next(error);
     }
   }
+<<<<<<< HEAD
   async removeFollower(req, res, next) {
     try {
       const currentUserId = req.query.currentUserId || req.body.currentUserId || req.user?.id || req.params.id;
@@ -1930,6 +2028,8 @@ var UserController = class {
       next(error);
     }
   }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 };
 var userController = new UserController();
 
@@ -2112,9 +2212,12 @@ function optionalAuth(req, res, next) {
 var router2 = Router2();
 router2.get("/", optionalAuth, userController.getAllUsers.bind(userController));
 router2.get("/search", validate({ query: SearchQuerySchema }), userController.search.bind(userController));
+<<<<<<< HEAD
 router2.get("/requests/pending", optionalAuth, userController.getPendingRequests.bind(userController));
 router2.post("/requests/:requesterId/accept", optionalAuth, userController.acceptRequest.bind(userController));
 router2.post("/requests/:requesterId/decline", optionalAuth, userController.declineRequest.bind(userController));
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 router2.get(
   "/:id",
   optionalAuth,
@@ -2122,6 +2225,7 @@ router2.get(
   userController.getProfile.bind(userController)
 );
 router2.get("/:id/followers", optionalAuth, userController.getFollowers.bind(userController));
+<<<<<<< HEAD
 router2.delete("/:id/followers/:followerId", optionalAuth, userController.removeFollower.bind(userController));
 router2.post("/:id/followers/:followerId/remove", optionalAuth, userController.removeFollower.bind(userController));
 router2.get("/:id/following", optionalAuth, userController.getFollowing.bind(userController));
@@ -2132,6 +2236,10 @@ router2.post("/:id/close-friends/:friendId/toggle", optionalAuth, userController
 router2.get("/:id/restricted", optionalAuth, userController.getRestrictedUsers.bind(userController));
 router2.post("/:id/restrict", optionalAuth, userController.restrictUser.bind(userController));
 router2.post("/:id/unrestrict", optionalAuth, userController.unrestrictUser.bind(userController));
+=======
+router2.get("/:id/following", optionalAuth, userController.getFollowing.bind(userController));
+router2.get("/:id/highlights", highlightController.getUserHighlights.bind(highlightController));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 router2.post("/:id/block", optionalAuth, userController.blockUser.bind(userController));
 router2.post("/:id/unblock", optionalAuth, userController.unblockUser.bind(userController));
 router2.put(
@@ -2164,7 +2272,10 @@ var PostRepository = class extends BaseRepository {
         u.avatar as author_avatar,
         u.bio as author_bio,
         u.is_verified as author_is_verified,
+<<<<<<< HEAD
         COALESCE(u.is_private, false) as author_is_private,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         (SELECT COUNT(*)::int FROM posts WHERE user_id = u.id) as author_posts_count,
         (SELECT COUNT(*)::int FROM follows WHERE following_id = u.id) as author_followers_count,
         (SELECT COUNT(*)::int FROM follows WHERE follower_id = u.id) as author_following_count,
@@ -2172,6 +2283,7 @@ var PostRepository = class extends BaseRepository {
         (SELECT COUNT(*)::int FROM comments WHERE post_id = p.id) as comments_count,
         EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND user_id = $1) as "isLiked",
         EXISTS(SELECT 1 FROM saved_posts WHERE post_id = p.id AND user_id = $1) as "isSaved",
+<<<<<<< HEAD
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = p.user_id) as "author_is_following",
         EXISTS(SELECT 1 FROM follow_requests WHERE requester_id = $1 AND target_id = p.user_id) as "author_has_requested_follow"
       FROM posts p
@@ -2181,6 +2293,11 @@ var PostRepository = class extends BaseRepository {
         OR p.user_id = $1
         OR EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = p.user_id)
       )
+=======
+        EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = p.user_id) as "author_is_following"
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       ORDER BY p.created_at DESC
       LIMIT $2 OFFSET $3`,
       [currentUserId || "none", limit, offset]
@@ -2194,6 +2311,7 @@ var PostRepository = class extends BaseRepository {
         c.*,
         u.username,
         u.avatar as user_avatar,
+<<<<<<< HEAD
         EXISTS(SELECT 1 FROM comment_likes WHERE comment_id = c.id AND user_id = $1) as "isLiked",
         p.user_id as post_author_id,
         EXISTS(SELECT 1 FROM restricted_users WHERE user_id = p.user_id AND restricted_id = c.user_id) as "isCommenterRestricted"
@@ -2206,6 +2324,12 @@ var PostRepository = class extends BaseRepository {
         OR c.user_id = $1
         OR p.user_id = $1
       )
+=======
+        EXISTS(SELECT 1 FROM comment_likes WHERE comment_id = c.id AND user_id = $1) as "isLiked"
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.post_id = ANY($2::varchar[])
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       ORDER BY c.created_at ASC`,
       [currentUserId || "none", postIds]
     );
@@ -2259,6 +2383,7 @@ var PostRepository = class extends BaseRepository {
     await query("DELETE FROM saved_posts WHERE post_id = $1 AND user_id = $2", [postId, userId]);
   }
   async addComment(commentId, postId, userId, text) {
+<<<<<<< HEAD
     let isApproved = true;
     try {
       const postRes = await query("SELECT user_id FROM posts WHERE id = $1", [postId]);
@@ -2287,6 +2412,13 @@ var PostRepository = class extends BaseRepository {
   async deleteComment(commentId, postId) {
     await query("DELETE FROM comments WHERE id = $1", [commentId]);
     await query("UPDATE posts SET comments_count = GREATEST(0, comments_count - 1) WHERE id = $1", [postId]);
+=======
+    await query(
+      `INSERT INTO comments (id, post_id, user_id, text, likes_count) VALUES ($1, $2, $3, $4, 0)`,
+      [commentId, postId, userId, text]
+    );
+    await query("UPDATE posts SET comments_count = comments_count + 1 WHERE id = $1", [postId]);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   }
 };
 var postRepository = new PostRepository();
@@ -2342,9 +2474,13 @@ var PostService = class {
         text: c.text,
         timestamp: c.created_at,
         likesCount: c.likes_count || 0,
+<<<<<<< HEAD
         isLiked: c.isLiked || false,
         isApproved: c.is_approved !== false,
         isRestricted: Boolean(c.isCommenterRestricted || c.is_approved === false)
+=======
+        isLiked: c.isLiked || false
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       });
     }
     return rawPosts.map((p) => ({
@@ -2358,8 +2494,11 @@ var PostService = class {
         bio: p.author_bio || "",
         isVerified: p.author_is_verified,
         isFollowing: p.author_is_following,
+<<<<<<< HEAD
         isPrivate: Boolean(p.author_is_private),
         hasRequestedFollow: Boolean(p.author_has_requested_follow),
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         followersCount: parseInt(p.author_followers_count || "0", 10),
         followingCount: parseInt(p.author_following_count || "0", 10),
         postsCount: parseInt(p.author_posts_count || "0", 10)
@@ -2487,10 +2626,17 @@ var PostService = class {
   }
   async addComment(postId, userId, text) {
     const commentId = `comm_${Date.now()}`;
+<<<<<<< HEAD
     const { isApproved } = await postRepository.addComment(commentId, postId, userId, text.trim());
     const user = await userRepository.findById(userId);
     const post = await postRepository.findById(postId);
     if (post && post.user_id !== userId && isApproved) {
+=======
+    await postRepository.addComment(commentId, postId, userId, text.trim());
+    const user = await userRepository.findById(userId);
+    const post = await postRepository.findById(postId);
+    if (post && post.user_id !== userId) {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       const media = typeof post.media === "string" ? JSON.parse(post.media) : post.media;
       await jobQueue.add("DISPATCH_NOTIFICATION" /* DISPATCH_NOTIFICATION */, {
         recipientId: post.user_id,
@@ -2509,6 +2655,7 @@ var PostService = class {
       text: text.trim(),
       timestamp: "Just now",
       likesCount: 0,
+<<<<<<< HEAD
       isLiked: false,
       isApproved,
       isRestricted: !isApproved
@@ -2522,6 +2669,11 @@ var PostService = class {
     await postRepository.deleteComment(commentId, postId);
     return { success: true, commentId };
   }
+=======
+      isLiked: false
+    };
+  }
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 };
 var postService = new PostService();
 
@@ -2596,6 +2748,7 @@ var PostController = class {
       next(error);
     }
   }
+<<<<<<< HEAD
   async approveComment(req, res, next) {
     try {
       const { commentId } = req.params;
@@ -2614,6 +2767,8 @@ var PostController = class {
       next(error);
     }
   }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 };
 var postController = new PostController();
 
@@ -2655,6 +2810,7 @@ router3.post(
   validate({ params: IdParamSchema, body: CreateCommentSchema }),
   postController.addComment.bind(postController)
 );
+<<<<<<< HEAD
 router3.post(
   "/:id/comments/:commentId/approve",
   optionalAuth,
@@ -2665,6 +2821,8 @@ router3.delete(
   optionalAuth,
   postController.deleteComment.bind(postController)
 );
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 var postRoutes = router3;
 
 // server/routes/v1/story.routes.ts
@@ -2690,6 +2848,7 @@ var StoryRepository = class extends BaseRepository {
         (SELECT COUNT(*) FROM story_likes WHERE story_id = s.id)::int as "likesCount"
       FROM stories s
       JOIN users u ON s.user_id = u.id
+<<<<<<< HEAD
       WHERE (
         COALESCE(u.is_private, false) = false
         OR s.user_id = $1
@@ -2703,11 +2862,16 @@ var StoryRepository = class extends BaseRepository {
       AND s.created_at >= NOW() - INTERVAL '24 hours'
       ORDER BY s.created_at DESC`,
       [currentUserId || "none"]
+=======
+      ORDER BY s.created_at DESC`,
+      [currentUserId || "user_current"]
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     );
     return res.rows;
   }
   async createStory(story) {
     await query(
+<<<<<<< HEAD
       `INSERT INTO stories (id, user_id, media_url, media_type, caption, filter, link, is_close_friends, poll, question, music)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
@@ -2767,6 +2931,13 @@ var StoryRepository = class extends BaseRepository {
     await query(`UPDATE stories SET question = $1 WHERE id = $2`, [JSON.stringify(question), storyId]);
     return question;
   }
+=======
+      `INSERT INTO stories (id, user_id, media_url, media_type, caption, filter, link)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [story.id, story.userId, story.mediaUrl, story.mediaType, story.caption, story.filter, story.link]
+    );
+  }
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   async recordView(storyId, userId) {
     await query(
       `INSERT INTO story_views (story_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
@@ -2845,11 +3016,15 @@ var StoryService = class {
           avatar: s.avatar,
           isVerified: s.is_verified,
           hasUnseen: false,
+<<<<<<< HEAD
           hasCloseFriends: false,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           items: []
         };
       }
       const isSeen = s.isSeen || false;
+<<<<<<< HEAD
       const isCloseFriends = Boolean(s.is_close_friends);
       if (!isSeen && s.user_id !== currentUserId) {
         groupedMap[s.user_id].hasUnseen = true;
@@ -2857,6 +3032,11 @@ var StoryService = class {
       if (isCloseFriends) {
         groupedMap[s.user_id].hasCloseFriends = true;
       }
+=======
+      if (!isSeen && s.user_id !== currentUserId) {
+        groupedMap[s.user_id].hasUnseen = true;
+      }
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       let timeAgo = "Just now";
       if (s.created_at) {
         const diffSecs = Math.max(0, Math.floor((Date.now() - new Date(s.created_at).getTime()) / 1e3));
@@ -2866,6 +3046,7 @@ var StoryService = class {
         else if (diffSecs < 604800) timeAgo = `${Math.floor(diffSecs / 86400)}d`;
         else timeAgo = `${Math.floor(diffSecs / 604800)}w`;
       }
+<<<<<<< HEAD
       let poll = s.poll ? typeof s.poll === "string" ? JSON.parse(s.poll) : s.poll : void 0;
       let question = s.question ? typeof s.question === "string" ? JSON.parse(s.question) : s.question : void 0;
       let music = s.music ? typeof s.music === "string" ? JSON.parse(s.music) : s.music : void 0;
@@ -2876,6 +3057,8 @@ var StoryService = class {
         poll.userVotedOptionId = votedOption ? votedOption.id : void 0;
         poll.totalVotes = poll.options.reduce((acc, o) => acc + (o.votesCount || 0), 0);
       }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       groupedMap[s.user_id].items.push({
         id: s.id,
         mediaUrl: s.media_url,
@@ -2886,6 +3069,7 @@ var StoryService = class {
         filter: s.filter || "normal",
         seen: isSeen,
         isLiked: Boolean(s.isLiked),
+<<<<<<< HEAD
         isCloseFriends,
         viewsCount: s.viewsCount || 0,
         likesCount: s.likesCount || 0,
@@ -2893,6 +3077,11 @@ var StoryService = class {
         poll,
         question,
         music
+=======
+        viewsCount: s.viewsCount || 0,
+        likesCount: s.likesCount || 0,
+        link: s.link || ""
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       });
     }
     return Object.values(groupedMap);
@@ -2911,11 +3100,15 @@ var StoryService = class {
       mediaType: data.mediaType || "image",
       caption: data.caption || "",
       filter: data.filter || "normal",
+<<<<<<< HEAD
       link: data.link || "",
       isCloseFriends: Boolean(data.isCloseFriends),
       poll: data.poll,
       question: data.question,
       music: data.music
+=======
+      link: data.link || ""
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     });
     return {
       id: storyId,
@@ -2925,10 +3118,13 @@ var StoryService = class {
       caption: data.caption || "",
       filter: data.filter || "normal",
       link: data.link || "",
+<<<<<<< HEAD
       isCloseFriends: Boolean(data.isCloseFriends),
       poll: data.poll,
       question: data.question,
       music: data.music,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       timestamp: "Just now",
       rawTimestamp: (/* @__PURE__ */ new Date()).toISOString(),
       seen: false,
@@ -2937,6 +3133,7 @@ var StoryService = class {
       likesCount: 0
     };
   }
+<<<<<<< HEAD
   async votePoll(storyId, userId, optionId) {
     const updatedPoll = await storyRepository.votePoll(storyId, userId, optionId);
     return { success: true, poll: updatedPoll };
@@ -2945,6 +3142,8 @@ var StoryService = class {
     const updatedQuestion = await storyRepository.submitQuestionResponse(storyId, user, response);
     return { success: true, question: updatedQuestion };
   }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   async recordView(storyId, userId) {
     await storyRepository.recordView(storyId, userId);
     return { success: true };
@@ -3020,6 +3219,7 @@ var StoryController = class {
       next(error);
     }
   }
+<<<<<<< HEAD
   async votePoll(req, res, next) {
     try {
       const { id } = req.params;
@@ -3045,6 +3245,8 @@ var StoryController = class {
       next(error);
     }
   }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   async getViewers(req, res, next) {
     try {
       const { id } = req.params;
@@ -3092,6 +3294,7 @@ var CreateStorySchema = z4.object({
   mediaType: z4.enum(["image", "video"]).optional().default("image"),
   caption: z4.string().max(500).optional().default(""),
   filter: z4.string().optional().default("normal"),
+<<<<<<< HEAD
   link: z4.string().optional().default(""),
   isCloseFriends: z4.boolean().optional().default(false),
   poll: z4.any().optional(),
@@ -3107,6 +3310,9 @@ var SubmitQuestionSchema = z4.object({
   username: z4.string().optional(),
   avatar: z4.string().optional(),
   response: z4.string().min(1, "Response text is required").max(500)
+=======
+  link: z4.string().optional().default("")
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 });
 var CreateHighlightSchema = z4.object({
   userId: z4.string().min(1, "User ID is required"),
@@ -3121,8 +3327,11 @@ router4.get("/", optionalAuth, storyController.getStories.bind(storyController))
 router4.post("/", validate({ body: CreateStorySchema }), storyController.createStory.bind(storyController));
 router4.post("/:id/view", validate({ params: IdParamSchema }), storyController.recordView.bind(storyController));
 router4.post("/:id/like", validate({ params: IdParamSchema }), storyController.toggleLike.bind(storyController));
+<<<<<<< HEAD
 router4.post("/:id/poll-vote", validate({ params: IdParamSchema, body: VotePollSchema }), storyController.votePoll.bind(storyController));
 router4.post("/:id/question-response", validate({ params: IdParamSchema, body: SubmitQuestionSchema }), storyController.submitQuestionResponse.bind(storyController));
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 router4.get("/:id/viewers", validate({ params: IdParamSchema }), storyController.getViewers.bind(storyController));
 router4.delete("/:id", validate({ params: IdParamSchema }), storyController.deleteStory.bind(storyController));
 var storyRoutes = router4;
@@ -3168,11 +3377,15 @@ var ReelRepository = class extends BaseRepository {
         EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = r.user_id) as "author_is_following"
       FROM reels r
       JOIN users u ON r.user_id = u.id
+<<<<<<< HEAD
       WHERE (
         COALESCE(u.is_private, false) = false
         OR r.user_id = $1
         OR EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = r.user_id)
       ) ${filterClause}
+=======
+      WHERE 1=1 ${filterClause}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}`,
       params
@@ -3685,6 +3898,7 @@ var MessageRepository = class extends BaseRepository {
   }
   async markChatSeen(chatId, currentUserId) {
     if (chatId && chatId.startsWith("chat_")) {
+<<<<<<< HEAD
       const rest = chatId.slice(5);
       let otherUserId = "";
       if (rest.startsWith(currentUserId + "_")) {
@@ -3693,6 +3907,11 @@ var MessageRepository = class extends BaseRepository {
         otherUserId = rest.slice(0, -(currentUserId.length + 1));
       }
       if (otherUserId) {
+=======
+      const parts = chatId.replace("chat_", "").split("_");
+      if (parts.length >= 2) {
+        const otherUserId = parts[0] === currentUserId ? parts[1] : parts[0];
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         await query(
           `UPDATE messages SET is_seen = true WHERE receiver_id = $1 AND sender_id = $2`,
           [currentUserId, otherUserId]
@@ -3759,11 +3978,14 @@ var MessageService = class {
     if (!data.receiverId || !data.text) {
       throw new BadRequestError("Receiver ID and message text are required");
     }
+<<<<<<< HEAD
     const isFollowingThem = await userRepository.isFollowing(data.senderId, data.receiverId);
     const areTheyFollowingMe = await userRepository.isFollowing(data.receiverId, data.senderId);
     if (!isFollowingThem || !areTheyFollowingMe) {
       throw new BadRequestError("You can only send messages to users if you follow each other (mutual follow).");
     }
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     let finalMedia = data.mediaUrl;
     if (data.mediaUrl && data.mediaUrl.startsWith("data:image")) {
       const uploadRes = await uploadToCloudinary(data.mediaUrl, "instavibe_messages");
@@ -4394,6 +4616,7 @@ router9.post("/explore-recommendations", rateLimiter({ max: 40 }), aiController.
 router9.post("/smart-search", rateLimiter({ max: 60 }), aiController.smartSearch.bind(aiController));
 var aiRoutes = router9;
 
+<<<<<<< HEAD
 // server/routes/v1/note.routes.ts
 import { Router as Router10 } from "express";
 var router10 = Router10();
@@ -4830,6 +5053,8 @@ router11.post("/save", optionalAuth, handleToggleSave);
 router11.post("/:trackId/save", optionalAuth, handleToggleSave);
 var audioRoutes = router11;
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 // server/config/swagger.config.ts
 var swaggerSpec = {
   openapi: "3.0.3",
@@ -5073,8 +5298,13 @@ var DocsController = class {
 var docsController = new DocsController();
 
 // server/routes/v1/index.ts
+<<<<<<< HEAD
 var router12 = Router12();
 router12.get("/health", async (req, res) => {
+=======
+var router10 = Router10();
+router10.get("/health", async (req, res) => {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   const dbHealthy = await checkDatabaseHealth();
   const queueStats = jobQueue.getStats();
   res.json({
@@ -5085,6 +5315,7 @@ router12.get("/health", async (req, res) => {
     queue: queueStats
   });
 });
+<<<<<<< HEAD
 router12.get("/swagger.json", docsController.getSwaggerJson.bind(docsController));
 router12.get("/docs", docsController.getSwaggerUI.bind(docsController));
 router12.use("/auth", authRoutes);
@@ -5102,6 +5333,23 @@ var v1Router = router12;
 
 // server/routes/index.ts
 var apiRouter = Router13();
+=======
+router10.get("/swagger.json", docsController.getSwaggerJson.bind(docsController));
+router10.get("/docs", docsController.getSwaggerUI.bind(docsController));
+router10.use("/auth", authRoutes);
+router10.use("/users", userRoutes);
+router10.use("/posts", postRoutes);
+router10.use("/stories", storyRoutes);
+router10.use("/reels", reelRoutes);
+router10.use("/messages", messageRoutes);
+router10.use("/notifications", notificationRoutes);
+router10.use("/highlights", highlightRoutes);
+router10.use("/gemini", aiRoutes);
+var v1Router = router10;
+
+// server/routes/index.ts
+var apiRouter = Router11();
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 apiRouter.use("/v1", v1Router);
 apiRouter.get("/docs", (req, res) => res.redirect("/api/v1/docs"));
 apiRouter.get("/swagger.json", (req, res) => res.redirect("/api/v1/swagger.json"));
@@ -5178,7 +5426,10 @@ async function runDatabaseMigrations() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS passkey_credential_id TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS passkey_public_key TEXT;
+<<<<<<< HEAD
     ALTER TABLE users ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT false;
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
   `);
@@ -5212,6 +5463,7 @@ async function runDatabaseMigrations() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (follower_id, following_id)
     );
+<<<<<<< HEAD
 
     CREATE TABLE IF NOT EXISTS follow_requests (
       requester_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -5219,6 +5471,8 @@ async function runDatabaseMigrations() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (requester_id, target_id)
     );
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   `);
     await query(`
     CREATE TABLE IF NOT EXISTS blocked_users (
@@ -5227,6 +5481,7 @@ async function runDatabaseMigrations() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (blocker_id, blocked_id)
     );
+<<<<<<< HEAD
 
     CREATE TABLE IF NOT EXISTS close_friends (
       user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -5247,6 +5502,8 @@ async function runDatabaseMigrations() {
     ALTER TABLE stories ADD COLUMN IF NOT EXISTS question JSONB DEFAULT NULL;
     ALTER TABLE stories ADD COLUMN IF NOT EXISTS music JSONB DEFAULT NULL;
     ALTER TABLE comments ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT true;
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   `);
     await query(`
     CREATE TABLE IF NOT EXISTS posts (
@@ -5440,6 +5697,7 @@ async function runDatabaseMigrations() {
     );
   `);
     await query(`
+<<<<<<< HEAD
     CREATE TABLE IF NOT EXISTS user_notes (
       user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
       text VARCHAR(60) NOT NULL,
@@ -5459,6 +5717,8 @@ async function runDatabaseMigrations() {
     );
   `);
     await query(`
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
     CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
@@ -5467,8 +5727,11 @@ async function runDatabaseMigrations() {
     CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reels_created_at ON reels(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reels_user_id ON reels(user_id);
+<<<<<<< HEAD
     CREATE INDEX IF NOT EXISTS idx_user_notes_expires_at ON user_notes(expires_at DESC);
     CREATE INDEX IF NOT EXISTS idx_saved_audios_user ON saved_audios(user_id);
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   `);
     logger.info("Database migrations completed successfully");
   } catch (err) {
@@ -5528,6 +5791,7 @@ function errorHandlerMiddleware(err, req, res, next) {
       stack: !config.isProduction ? err.stack : void 0
     }
   };
+<<<<<<< HEAD
   if (statusCode >= 500) {
     logger.error(
       `[ErrorHandler] ${req.method} ${req.originalUrl} - ${statusCode} ${errorCode}: ${err.message}`,
@@ -5544,6 +5808,18 @@ function errorHandlerMiddleware(err, req, res, next) {
       `[ErrorHandler] ${req.method} ${req.originalUrl} - ${statusCode} ${errorCode}: ${err.message}`
     );
   }
+=======
+  logger.error(
+    `[ErrorHandler] ${req.method} ${req.originalUrl} - ${statusCode} ${errorCode}: ${err.message}`,
+    err,
+    {
+      requestId: req.id,
+      path: req.originalUrl,
+      method: req.method,
+      statusCode
+    }
+  );
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   res.status(statusCode).json(errorResponse);
 }
 function notFoundHandler(req, res) {

@@ -13,7 +13,10 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { SettingsDrawer } from '../profile/SettingsDrawer';
+<<<<<<< HEAD
 import { InstagramWordmark } from '../common/InstagramIcons';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 export const MobileHeader: React.FC = () => {
   const {
@@ -42,7 +45,11 @@ export const MobileHeader: React.FC = () => {
   if (activeTab === 'profile') {
     return (
       <>
+<<<<<<< HEAD
         <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-2.5 bg-white dark:bg-black border-b border-neutral-200 dark:border-neutral-800 transition-colors select-none">
+=======
+        <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 glass-header transition-colors select-none">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           {/* Username with Account Switcher Dropdown */}
           <div className="relative">
             <button
@@ -144,6 +151,7 @@ export const MobileHeader: React.FC = () => {
 
   // Home Feed or other tabs
   return (
+<<<<<<< HEAD
     <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-2.5 bg-white dark:bg-black border-b border-neutral-200 dark:border-neutral-800 transition-colors select-none">
       {/* Brand / Logo with subtle following chevron */}
       <div className="relative flex items-center">
@@ -153,6 +161,18 @@ export const MobileHeader: React.FC = () => {
         >
           <InstagramWordmark text="100gram" size="md" className="text-neutral-950 dark:text-white" />
           <ChevronDown size={14} className="text-neutral-500 stroke-[2.5]" />
+=======
+    <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 glass-header transition-colors select-none">
+      {/* Brand / Logo or Account Switcher */}
+      <div className="relative flex items-center">
+        <button
+          onClick={() => setActiveTab('feed')}
+          className="flex items-center gap-1 text-left focus:outline-none cursor-pointer group"
+        >
+          <span className="font-insta-logo text-3xl leading-none text-neutral-950 dark:text-white tracking-tight pt-1 group-hover:opacity-85 transition-opacity">
+            InstaVibe
+          </span>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         </button>
       </div>
 

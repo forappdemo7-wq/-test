@@ -16,12 +16,19 @@ import {
   Check,
 } from 'lucide-react';
 import { NotificationPreferences } from '../../types';
+<<<<<<< HEAD
 import { STORAGE_KEYS, safeGetJSON, safeSetJSON } from '../../constants/storage';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 interface NotificationSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+<<<<<<< HEAD
   onSendTestNotification?: () => void;
+=======
+  onSendTestNotification: () => void;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 }
 
 export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
@@ -30,7 +37,15 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   onSendTestNotification,
 }) => {
   const [prefs, setPrefs] = useState<NotificationPreferences>(() => {
+<<<<<<< HEAD
     return safeGetJSON<NotificationPreferences>(STORAGE_KEYS.NOTIF_PREFS, {
+=======
+    try {
+      const saved = localStorage.getItem('instavibe_notif_prefs');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       likes: true,
       comments: true,
       follows: true,
@@ -39,7 +54,11 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
       storyLikes: true,
       soundEnabled: true,
       pushEnabled: true,
+<<<<<<< HEAD
     });
+=======
+    };
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   });
 
   const [permissionState, setPermissionState] = useState<NotificationPermission>(() => {
@@ -54,7 +73,13 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const updatePref = (key: keyof NotificationPreferences, value: boolean) => {
     const updated = { ...prefs, [key]: value };
     setPrefs(updated);
+<<<<<<< HEAD
     safeSetJSON(STORAGE_KEYS.NOTIF_PREFS, updated);
+=======
+    try {
+      localStorage.setItem('instavibe_notif_prefs', JSON.stringify(updated));
+    } catch {}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   };
 
   const handleRequestPushPermission = async () => {

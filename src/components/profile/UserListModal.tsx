@@ -165,7 +165,11 @@ export const UserListModal: React.FC = () => {
               Remove follower?
             </h3>
             <p className="text-xs text-slate-500 dark:text-neutral-400 mb-5 leading-relaxed">
+<<<<<<< HEAD
               100gram won't tell <span className="font-semibold text-slate-800 dark:text-slate-200">@{userToRemove.username}</span> they were removed from your followers.
+=======
+              InstaVibe won't tell <span className="font-semibold text-slate-800 dark:text-slate-200">@{userToRemove.username}</span> they were removed from your followers.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             </p>
 
             <div className="space-y-2">

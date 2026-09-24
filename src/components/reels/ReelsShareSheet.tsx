@@ -55,7 +55,11 @@ export const ReelsShareSheet: React.FC<ReelsShareSheetProps> = ({
       try {
         await navigator.share({
           title: `Reel by @${reel.author?.username || 'creator'}`,
+<<<<<<< HEAD
           text: reel.caption || 'Check out this reel on 100gram!',
+=======
+          text: reel.caption || 'Check out this reel on InstaVibe!',
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           url: reelUrl,
         });
       } catch {

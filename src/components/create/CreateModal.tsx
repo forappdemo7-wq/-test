@@ -59,8 +59,11 @@ export const CreateModal: React.FC = () => {
     saveDraft,
     deleteDraft,
     schedulePost,
+<<<<<<< HEAD
     preselectedAudioTrack,
     setPreselectedAudioTrack,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   } = useApp();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +80,7 @@ export const CreateModal: React.FC = () => {
   const [selectedAudioTrack, setSelectedAudioTrack] = useState<AudioTrack | null>(null);
   const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
 
+<<<<<<< HEAD
   // Apply preselected audio if opened via "Use Sound" in Audio Hub
   useEffect(() => {
     if (preselectedAudioTrack) {
@@ -86,6 +90,8 @@ export const CreateModal: React.FC = () => {
     }
   }, [preselectedAudioTrack, setPreselectedAudioTrack]);
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   // Metadata form
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');

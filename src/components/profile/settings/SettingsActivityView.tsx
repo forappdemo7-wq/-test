@@ -107,7 +107,11 @@ export const SettingsActivityView: React.FC = () => {
             <div>
               <p className="text-3xl font-bold text-neutral-950 dark:text-white">38m</p>
               <p className="text-xs text-neutral-500">
+<<<<<<< HEAD
                 The average time you spent per day using 100gram in the past week.
+=======
+                The average time you spent per day using InstaVibe in the past week.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               </p>
             </div>
 
@@ -237,7 +241,11 @@ export const SettingsActivityView: React.FC = () => {
               <MessageCircle size={32} className="mx-auto text-neutral-300 dark:text-neutral-600" />
               <p className="text-sm font-semibold">No comments yet</p>
               <p className="text-xs text-neutral-500">
+<<<<<<< HEAD
                 Comments you post across 100gram will be organized here.
+=======
+                Comments you post across InstaVibe will be organized here.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               </p>
             </div>
           ) : (

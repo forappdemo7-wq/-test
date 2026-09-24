@@ -28,9 +28,14 @@ export interface User {
   note?: {
     text: string;
     emoji?: string;
+<<<<<<< HEAD
     musicTrack?: AudioTrack | { title: string; artist: string; audioUrl?: string; coverUrl?: string; id?: string } | string;
     audience?: 'followers_you_follow_back' | 'close_friends';
     expiresAt?: number | string;
+=======
+    musicTrack?: string;
+    expiresAt?: number;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     createdAt?: string;
   };
 }
@@ -333,12 +338,15 @@ export interface DirectMessage {
   gifUrl?: string;
   replyTo?: DirectMessageReply;
   sharedPost?: DirectMessageSharedPost;
+<<<<<<< HEAD
   isNoteReply?: boolean;
   noteContext?: {
     text: string;
     emoji?: string;
     musicTrackTitle?: string;
   };
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   isVanish?: boolean;
   isDeleted?: boolean;
   deletedAt?: string;
@@ -376,10 +384,14 @@ export interface ChatThread {
   note?: {
     text: string;
     emoji?: string;
+<<<<<<< HEAD
     musicTrack?: AudioTrack | string;
     audience?: 'followers_you_follow_back' | 'close_friends';
     createdAt?: string;
     expiresAt?: number;
+=======
+    musicTrack?: string;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   };
   category?: 'primary' | 'general' | 'requests';
   isMuted?: boolean;

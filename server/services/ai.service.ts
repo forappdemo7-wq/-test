@@ -189,7 +189,11 @@ Respond naturally in character as an Instagram creator/friend in 1-2 friendly se
       };
     }
 
+<<<<<<< HEAD
     const prompt = `You are an AI discovery engine for 100gram, a visual social platform.
+=======
+    const prompt = `You are an AI discovery engine for InstaVibe, a high-end visual social platform.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 User Category Context: "${activeCategory}"
 User Interests / Followed Topics: ${JSON.stringify(userInterests)}
 Recent Tags: ${JSON.stringify(recentTags)}

@@ -12,7 +12,11 @@ export const StoriesBar: React.FC = () => {
   const myIsCloseFriends = myGroup ? myGroup.items.some((it) => it.isCloseFriends) : false;
 
   return (
+<<<<<<< HEAD
     <div className="w-full bg-white dark:bg-black sm:bg-white sm:dark:bg-black sm:rounded-xl border-b sm:border border-neutral-200/80 dark:border-neutral-800/80 py-3.5 px-3 sm:px-4 mb-4 select-none transition-colors">
+=======
+    <div className="w-full bg-white dark:bg-neutral-900 sm:rounded-3xl border-b sm:border border-neutral-200/80 dark:border-neutral-800/80 py-4 px-3 sm:px-5 mb-4 shadow-soft transition-colors select-none">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       <div className="flex items-center gap-4 overflow-x-auto no-scrollbar scroll-smooth">
         {/* Your Story button */}
         <div className="flex flex-col items-center flex-shrink-0 cursor-pointer group">
@@ -38,12 +42,20 @@ export const StoriesBar: React.FC = () => {
                 setIsCreateOpen(true);
               }}
               title="Add Story"
+<<<<<<< HEAD
               className="absolute bottom-0.5 right-0.5 w-5 h-5 bg-[#0095f6] text-white rounded-full flex items-center justify-center ring-2 ring-white dark:ring-black shadow-xs transition-transform group-hover:scale-110 active:scale-90"
+=======
+              className="absolute bottom-0.5 right-0.5 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center ring-2 ring-white dark:ring-neutral-900 shadow-soft-xs transition-transform group-hover:scale-110 active:scale-90"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             >
               <Plus size={13} className="stroke-[3]" />
             </button>
           </div>
+<<<<<<< HEAD
           <span className="text-[11px] text-neutral-600 dark:text-neutral-400 font-normal mt-1.5 truncate max-w-[72px] text-center group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
+=======
+          <span className="text-[11px] text-neutral-600 dark:text-neutral-400 font-medium mt-1.5 truncate max-w-[70px] text-center group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             Your story
           </span>
         </div>

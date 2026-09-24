@@ -345,6 +345,7 @@ export async function runDatabaseMigrations(): Promise<void> {
     );
   `);
 
+<<<<<<< HEAD
   // 21. User Notes Table (Instagram Notes with 24-hour expiration)
   await query(`
     CREATE TABLE IF NOT EXISTS user_notes (
@@ -368,6 +369,8 @@ export async function runDatabaseMigrations(): Promise<void> {
     );
   `);
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   // Create Performance Indexes
   await query(`
     CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
@@ -378,8 +381,11 @@ export async function runDatabaseMigrations(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reels_created_at ON reels(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reels_user_id ON reels(user_id);
+<<<<<<< HEAD
     CREATE INDEX IF NOT EXISTS idx_user_notes_expires_at ON user_notes(expires_at DESC);
     CREATE INDEX IF NOT EXISTS idx_saved_audios_user ON saved_audios(user_id);
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   `);
 
     logger.info('Database migrations completed successfully');

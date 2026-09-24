@@ -277,7 +277,11 @@ export const SettingsPrivacyView: React.FC = () => {
             </h3>
           </div>
           <p className="text-xs text-neutral-500">
+<<<<<<< HEAD
             Blocked accounts cannot find your profile, posts, reels, or stories on 100gram.
+=======
+            Blocked accounts cannot find your profile, posts, reels, or stories on InstaVibe.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           </p>
         </div>
 
@@ -486,7 +490,11 @@ export const SettingsPrivacyView: React.FC = () => {
                 )}
               </div>
               <p className="text-xs text-neutral-500">
+<<<<<<< HEAD
                 {isPrivate ? 'Only approved followers can see your photos, reels, and stories' : 'Anyone on or off 100gram can see your posts and stories'}
+=======
+                {isPrivate ? 'Only approved followers can see your photos, reels, and stories' : 'Anyone on or off InstaVibe can see your posts and stories'}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               </p>
             </div>
           </div>
@@ -544,7 +552,11 @@ export const SettingsPrivacyView: React.FC = () => {
               <span>Switch to public account?</span>
             </div>
             <p className="text-amber-700 dark:text-amber-300 leading-relaxed">
+<<<<<<< HEAD
               Anyone on or off 100gram will be able to see your photos, reels, and stories. Any pending follow requests will be automatically accepted.
+=======
+              Anyone on or off InstaVibe will be able to see your photos, reels, and stories. Any pending follow requests will be automatically accepted.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             </p>
             <div className="flex items-center gap-2 pt-1">
               <button

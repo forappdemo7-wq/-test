@@ -50,7 +50,11 @@ export const TrendingHub: React.FC<TrendingHubProps> = ({
           </div>
           <div>
             <h2 className="text-sm sm:text-base font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
+<<<<<<< HEAD
               Trending on 100gram
+=======
+              Trending on InstaVibe
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
                 LIVE
               </span>

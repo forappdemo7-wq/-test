@@ -28,6 +28,7 @@ export function errorHandlerMiddleware(
     },
   };
 
+<<<<<<< HEAD
   if (statusCode >= 500) {
     logger.error(
       `[ErrorHandler] ${req.method} ${req.originalUrl} - ${statusCode} ${errorCode}: ${err.message}`,
@@ -44,6 +45,18 @@ export function errorHandlerMiddleware(
       `[ErrorHandler] ${req.method} ${req.originalUrl} - ${statusCode} ${errorCode}: ${err.message}`
     );
   }
+=======
+  logger.error(
+    `[ErrorHandler] ${req.method} ${req.originalUrl} - ${statusCode} ${errorCode}: ${err.message}`,
+    err,
+    {
+      requestId: req.id,
+      path: req.originalUrl,
+      method: req.method,
+      statusCode,
+    }
+  );
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
   res.status(statusCode).json(errorResponse);
 }

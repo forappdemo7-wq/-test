@@ -283,7 +283,11 @@ export const AuthPage: React.FC = () => {
                   >
                     <img
                       src={slide.image}
+<<<<<<< HEAD
                       alt="100gram Preview"
+=======
+                      alt="InstaVibe Preview"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 text-white">
@@ -321,7 +325,11 @@ export const AuthPage: React.FC = () => {
               {/* Brand Logo */}
               <div className="flex flex-col items-center mb-6">
                 <h1 className="text-4xl font-serif tracking-tight font-extrabold bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 bg-clip-text text-transparent select-none cursor-pointer">
+<<<<<<< HEAD
                   100gram
+=======
+                  InstaVibe
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                 </h1>
 
                 {/* Direct Two-Option Selector: Log In vs Create New Account */}
@@ -817,7 +825,11 @@ export const AuthPage: React.FC = () => {
           <span className="hover:underline cursor-pointer">Privacy</span>
           <span className="hover:underline cursor-pointer">Terms</span>
           <span className="hover:underline cursor-pointer">Locations</span>
+<<<<<<< HEAD
           <span className="hover:underline cursor-pointer">100gram Lite</span>
+=======
+          <span className="hover:underline cursor-pointer">InstaVibe Lite</span>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           <span className="hover:underline cursor-pointer">Threads</span>
           <span className="hover:underline cursor-pointer">Contact Uploading & Non-Users</span>
           <span className="hover:underline cursor-pointer">Meta Verified</span>
@@ -830,7 +842,11 @@ export const AuthPage: React.FC = () => {
             <option value="de">Deutsch</option>
             <option value="ja">日本語</option>
           </select>
+<<<<<<< HEAD
           <span>© 2026 100GRAM FROM META</span>
+=======
+          <span>© 2026 INSTAVIBE FROM K</span>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         </div>
       </footer>
     </div>

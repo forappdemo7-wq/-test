@@ -47,6 +47,7 @@ const StoryRingComponent: React.FC<StoryRingProps> = ({
     }
     if (isCloseFriend) {
       if (hasUnseen) {
+<<<<<<< HEAD
         return 'from-[#10b981] via-[#00ba37] to-[#059669] shadow-sm';
       }
       return 'from-neutral-300 to-neutral-300 dark:from-neutral-700 dark:to-neutral-700 opacity-60';
@@ -55,6 +56,16 @@ const StoryRingComponent: React.FC<StoryRingProps> = ({
       return 'from-[#f09433] via-[#dc2743] to-[#bc1888] shadow-sm';
     }
     return 'from-neutral-300 to-neutral-300 dark:from-neutral-700 dark:to-neutral-700 opacity-70';
+=======
+        return 'from-emerald-400 via-green-500 to-emerald-500 shadow-sm';
+      }
+      return 'from-emerald-500/40 to-green-500/40 dark:from-emerald-700/40 dark:to-green-800/40';
+    }
+    if (hasUnseen) {
+      return 'from-amber-400 via-rose-500 to-fuchsia-600';
+    }
+    return 'from-neutral-300 to-neutral-200 dark:from-neutral-700 dark:to-neutral-800';
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   };
 
   return (
@@ -72,12 +83,19 @@ const StoryRingComponent: React.FC<StoryRingProps> = ({
           onClick?.();
         }
       }}
+<<<<<<< HEAD
       className={`relative rounded-full cursor-pointer select-none flex-shrink-0 flex items-center justify-center ${
         hasUnseen ? 'p-[2.5px]' : 'p-[1.5px]'
       } bg-gradient-to-tr ${getGradientClasses()} ${config.outer} ${className}`}
     >
       {/* Background gap ring between gradient and avatar */}
       <div className="w-full h-full bg-white dark:bg-black rounded-full p-[2px] flex items-center justify-center overflow-hidden transition-colors">
+=======
+      className={`relative rounded-full cursor-pointer select-none flex-shrink-0 flex items-center justify-center p-[2.5px] bg-gradient-to-tr ${getGradientClasses()} ${config.outer} ${className}`}
+    >
+      {/* White/Dark background gap ring between gradient and avatar */}
+      <div className="w-full h-full bg-white dark:bg-neutral-950 rounded-full p-[2px] flex items-center justify-center overflow-hidden transition-colors">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         <img
           src={optimizedAvatar}
           alt={username || 'User story avatar'}

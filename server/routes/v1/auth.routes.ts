@@ -12,12 +12,15 @@ router.post(
   validate({ body: SignupSchema }),
   authController.signup.bind(authController)
 );
+<<<<<<< HEAD
 router.post(
   '/register',
   rateLimiter({ max: 20 }),
   validate({ body: SignupSchema }),
   authController.signup.bind(authController)
 );
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 router.post(
   '/signin',
@@ -25,12 +28,15 @@ router.post(
   validate({ body: SigninSchema }),
   authController.signin.bind(authController)
 );
+<<<<<<< HEAD
 router.post(
   '/login',
   rateLimiter({ max: 30 }),
   validate({ body: SigninSchema }),
   authController.signin.bind(authController)
 );
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 router.post(
   '/refresh',

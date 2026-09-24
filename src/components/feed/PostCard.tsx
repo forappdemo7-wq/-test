@@ -29,7 +29,10 @@ import { StoryRing } from '../stories/StoryRing';
 import { ProgressiveImage } from './ProgressiveImage';
 import { FeedVideoPlayer } from './FeedVideoPlayer';
 import { POPULAR_SOUNDTRACKS } from '../../data/trendingAudio';
+<<<<<<< HEAD
 import { InstagramVerifiedBadge } from '../common/InstagramIcons';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 interface PostCardProps {
   post: Post;
@@ -51,7 +54,10 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
     toggleFollowUser,
     celebrateAction,
     setSelectedUserProfile,
+<<<<<<< HEAD
     openAudioDetail,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   } = useApp();
 
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
@@ -152,9 +158,15 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
   const quickEmojis = ['❤️', '🔥', '👏', '😍', '✨', '🙌', '💯', '🥂'];
 
   return (
+<<<<<<< HEAD
     <article className="w-full bg-white dark:bg-black sm:bg-white sm:dark:bg-black sm:rounded-xl border-b sm:border border-neutral-200/80 dark:border-neutral-800/80 mb-4 overflow-hidden select-none transition-colors">
       {/* Post Header */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3">
+=======
+    <article className="w-full bg-white dark:bg-neutral-900 sm:rounded-3xl border-b sm:border border-neutral-200/80 dark:border-neutral-800/80 mb-4 overflow-hidden shadow-soft transition-colors select-none">
+      {/* Post Header */}
+      <div className="flex items-center justify-between px-4 py-3">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         <div className="flex items-center gap-3 min-w-0">
           <div
             onClick={() => {
@@ -184,12 +196,22 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
             <div className="flex items-center gap-1.5 leading-tight flex-wrap">
               <span
                 onClick={() => setSelectedUserProfile(post.author)}
+<<<<<<< HEAD
                 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 hover:opacity-75 cursor-pointer truncate"
+=======
+                className="text-sm font-bold text-neutral-900 dark:text-neutral-100 hover:underline cursor-pointer truncate"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               >
                 {post.author.username}
               </span>
               {post.author.isVerified && (
+<<<<<<< HEAD
                 <InstagramVerifiedBadge size={14} className="flex-shrink-0" />
+=======
+                <span className="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] flex-shrink-0 shadow-soft-xs">
+                  ✓
+                </span>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               )}
               {post.author.id !== currentUser?.id && (
                 <>
@@ -202,7 +224,11 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
                     className={`text-xs font-semibold cursor-pointer transition-colors active:scale-95 ${
                       post.author.isFollowing || post.author.hasRequestedFollow
                         ? 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
+<<<<<<< HEAD
                         : 'text-[#0095f6] hover:text-[#1877f2] font-semibold'
+=======
+                        : 'text-blue-500 hover:text-blue-700 font-bold'
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                     }`}
                   >
                     {post.author.isFollowing
@@ -454,6 +480,7 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
 
         {/* Music Track (if attached with Instagram Vinyl Sticker & Play toggle) */}
         {post.musicTrack && (
+<<<<<<< HEAD
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <button
               type="button"
@@ -487,6 +514,30 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
               Audio Hub ↗
             </button>
           </div>
+=======
+          <button
+            type="button"
+            onClick={togglePostAudio}
+            className={`flex items-center gap-2 text-xs px-2.5 py-1 rounded-full border transition-all mt-1 cursor-pointer select-none max-w-fit ${
+              isPlayingAudio
+                ? 'bg-pink-500/10 border-pink-500/30 text-pink-600 dark:text-pink-400 font-semibold'
+                : 'bg-neutral-100 dark:bg-neutral-800/80 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+            }`}
+          >
+            <Disc
+              size={14}
+              className={`text-pink-500 ${isPlayingAudio ? 'animate-spin' : ''}`}
+            />
+            <span className="truncate max-w-[220px]">
+              {post.musicTrack.title} • {post.musicTrack.artist}
+            </span>
+            {isPlayingAudio ? (
+              <Volume2 size={13} className="text-pink-500 animate-pulse flex-shrink-0" />
+            ) : (
+              <VolumeX size={13} className="text-neutral-400 flex-shrink-0" />
+            )}
+          </button>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         )}
 
         {/* Caption */}
@@ -555,17 +606,24 @@ const PostCardComponent: React.FC<PostCardProps> = ({ post }) => {
         {post.commentsCount > 0 && (
           <button
             onClick={() => setActiveCommentsPost(post)}
+<<<<<<< HEAD
             className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 mt-1.5 block font-normal cursor-pointer"
+=======
+            className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 mt-1.5 block font-medium cursor-pointer"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           >
             View all {post.commentsCount} {post.commentsCount === 1 ? 'comment' : 'comments'}
           </button>
         )}
 
+<<<<<<< HEAD
         {/* Timestamp in authentic Instagram uppercase styling */}
         <time className="text-[10px] uppercase text-neutral-400 dark:text-neutral-500 font-medium tracking-wide mt-1.5 block">
           {post.timestamp.toUpperCase().includes('AGO') ? post.timestamp.toUpperCase() : `${post.timestamp.toUpperCase()} AGO`}
         </time>
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         {/* AI Smart Comment Suggestions Bar */}
         <div className="mt-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
           <button

@@ -36,9 +36,14 @@ import { TrendingHub } from './TrendingHub';
 import { AiRecommendations } from './AiRecommendations';
 import { SearchHistoryModal } from './SearchHistoryModal';
 import { MasonryGrid } from './MasonryGrid';
+<<<<<<< HEAD
 import { STORAGE_KEYS, safeGetJSON, safeSetJSON } from '../../constants/storage';
 
 const RECENT_SEARCHES_KEY = STORAGE_KEYS.RECENT_SEARCHES;
+=======
+
+const RECENT_SEARCHES_KEY = 'instavibe_recent_searches_v2';
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 export const ExploreGrid: React.FC = () => {
   const {
@@ -71,7 +76,16 @@ export const ExploreGrid: React.FC = () => {
 
   // Recent Searches State
   const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>(() => {
+<<<<<<< HEAD
     return safeGetJSON<RecentSearchItem[]>(RECENT_SEARCHES_KEY, []);
+=======
+    try {
+      const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   });
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +98,15 @@ export const ExploreGrid: React.FC = () => {
   // Persist Recent Searches
   const saveRecentSearches = (items: RecentSearchItem[]) => {
     setRecentSearches(items);
+<<<<<<< HEAD
     safeSetJSON(RECENT_SEARCHES_KEY, items);
+=======
+    try {
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(items));
+    } catch {
+      // ignore
+    }
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   };
 
   const addRecentSearch = (item: Omit<RecentSearchItem, 'id' | 'timestamp'>) => {

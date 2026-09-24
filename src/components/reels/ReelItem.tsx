@@ -49,7 +49,10 @@ export const ReelItem: React.FC<ReelItemProps> = ({
     currentUser,
     setSelectedUserProfile,
     recordReelWatch,
+<<<<<<< HEAD
     openAudioDetail,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   } = useApp();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -394,6 +397,7 @@ export const ReelItem: React.FC<ReelItemProps> = ({
             {reel.caption || ''}
           </p>
 
+<<<<<<< HEAD
           {/* Music Track Marquee (Opens Audio Hub) */}
           <button
             type="button"
@@ -416,6 +420,17 @@ export const ReelItem: React.FC<ReelItemProps> = ({
               {reel.musicTrack?.title || 'Original Audio'} • {reel.musicTrack?.artist || reel.author?.username || 'creator'}
             </span>
           </button>
+=======
+          {/* Music Track Marquee */}
+          <div className="flex items-center gap-2 text-xs text-white/80 font-medium">
+            <div className="p-1 rounded-full bg-black/40 backdrop-blur-sm">
+              <Music size={12} className={isPlaying ? 'animate-bounce' : ''} />
+            </div>
+            <span className="truncate max-w-[220px]">
+              {reel.musicTrack?.title || 'Original Audio'} • {reel.musicTrack?.artist || reel.author?.username || 'creator'}
+            </span>
+          </div>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         </div>
 
         {/* Right Floating Action Bar */}
@@ -519,6 +534,7 @@ export const ReelItem: React.FC<ReelItemProps> = ({
             </div>
           </motion.button>
 
+<<<<<<< HEAD
           {/* Spinning Audio Vinyl Disc (Opens Audio Hub) */}
           <button
             type="button"
@@ -539,6 +555,17 @@ export const ReelItem: React.FC<ReelItemProps> = ({
           >
             <div className="w-3.5 h-3.5 rounded-full bg-rose-500" />
           </button>
+=======
+          {/* Spinning Audio Vinyl Disc */}
+          <div
+            className={`w-9 h-9 rounded-full bg-gradient-to-tr from-neutral-900 to-neutral-700 border-2 border-white/60 flex items-center justify-center shadow-soft-xs ${
+              isPlaying ? 'animate-spin' : ''
+            }`}
+            style={{ animationDuration: '3s' }}
+          >
+            <div className="w-3.5 h-3.5 rounded-full bg-rose-500" />
+          </div>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         </div>
       </div>
 

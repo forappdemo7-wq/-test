@@ -273,7 +273,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose 
                 </span>
               </div>
               <p className="text-xs text-neutral-500 leading-relaxed">
+<<<<<<< HEAD
                 Manage your connected experiences and account settings across 100gram, Facebook, and Meta.
+=======
+                Manage your connected experiences and account settings across InstaVibe, Facebook, and Meta.
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               </p>
               <button
                 onClick={() => setActiveSubView('Password and security')}
@@ -284,10 +288,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose 
               </button>
             </div>
 
+<<<<<<< HEAD
             {/* Section 1: How you use 100gram */}
             <div className="space-y-1">
               <h3 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-2 mb-1">
                 How you use 100gram
+=======
+            {/* Section 1: How you use InstaVibe */}
+            <div className="space-y-1">
+              <h3 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-2 mb-1">
+                How you use InstaVibe
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               </h3>
 
               <button

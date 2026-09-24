@@ -1,19 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+<<<<<<< HEAD
     <loc>https://100gram.app/</loc>
+=======
+    <loc>https://instavibe.app/</loc>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     <lastmod>2026-08-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+<<<<<<< HEAD
     <loc>https://100gram.app/explore</loc>
+=======
+    <loc>https://instavibe.app/explore</loc>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     <lastmod>2026-08-30</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+<<<<<<< HEAD
     <loc>https://100gram.app/reels</loc>
+=======
+    <loc>https://instavibe.app/reels</loc>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     <lastmod>2026-08-30</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>

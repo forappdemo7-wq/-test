@@ -326,7 +326,11 @@ export const NotificationsView: React.FC = () => {
         // Native notification if permitted
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
           try {
+<<<<<<< HEAD
             new Notification(`New ${type} notification on 100gram!`, {
+=======
+            new Notification(`New ${type} notification on InstaVibe!`, {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               body: 'Someone interacted with your profile.',
               icon: '/favicon.ico',
             });

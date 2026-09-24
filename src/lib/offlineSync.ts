@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { STORAGE_KEYS, safeGetJSON, safeSetJSON, safeRemove } from '../constants/storage';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 export interface QueuedAction {
   id: string;
@@ -8,6 +11,7 @@ export interface QueuedAction {
   timestamp: number;
 }
 
+<<<<<<< HEAD
 const QUEUE_KEY = STORAGE_KEYS.OFFLINE_QUEUE;
 
 export const getOfflineQueue = (): QueuedAction[] => {
@@ -27,6 +31,38 @@ export const enqueueOfflineAction = (action: Omit<QueuedAction, 'id' | 'timestam
 
 export const clearOfflineQueue = (): void => {
   safeRemove(QUEUE_KEY);
+=======
+const QUEUE_KEY = 'instavibe_offline_actions_queue';
+
+export const getOfflineQueue = (): QueuedAction[] => {
+  try {
+    const raw = localStorage.getItem(QUEUE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+};
+
+export const enqueueOfflineAction = (action: Omit<QueuedAction, 'id' | 'timestamp'>): void => {
+  try {
+    const queue = getOfflineQueue();
+    const newAction: QueuedAction = {
+      ...action,
+      id: `act_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      timestamp: Date.now(),
+    };
+    queue.push(newAction);
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  } catch (e) {
+    console.error('Failed to enqueue offline action:', e);
+  }
+};
+
+export const clearOfflineQueue = (): void => {
+  localStorage.removeItem(QUEUE_KEY);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 };
 
 export const flushOfflineQueue = async (
@@ -67,13 +103,21 @@ export const flushOfflineQueue = async (
       }
       syncedCount++;
       if (onActionSynced) onActionSynced(item);
+<<<<<<< HEAD
     } catch {
+=======
+    } catch (err) {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       // Keep in remaining queue if failed
       remaining.push(item);
     }
   }
 
+<<<<<<< HEAD
   safeSetJSON(QUEUE_KEY, remaining);
+=======
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   return syncedCount;
 };
 

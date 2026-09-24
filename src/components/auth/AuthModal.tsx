@@ -221,7 +221,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setSuccessMessage('Account created! Please verify your email.');
           setMode('verify_email');
         } else {
+<<<<<<< HEAD
           setSuccessMessage('Account created successfully! Welcome to 100gram.');
+=======
+          setSuccessMessage('Account created successfully! Welcome to InstaVibe.');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
           setTimeout(() => {
             onClose();
           }, 800);
@@ -299,7 +303,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       const res = await confirmEmailVerification(emailVerifyCode.trim());
       if (res.success) {
+<<<<<<< HEAD
         setSuccessMessage('Email verified successfully! Enjoy 100gram.');
+=======
+        setSuccessMessage('Email verified successfully! Enjoy InstaVibe.');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         setTimeout(() => onClose(), 800);
       } else {
         setErrorMessage(res.error || 'Invalid verification code');
@@ -392,7 +400,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             )}
             <span className="font-serif italic font-bold text-xl tracking-tight text-neutral-900 dark:text-white">
+<<<<<<< HEAD
               100gram
+=======
+              InstaVibe
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-500 rounded-full">
               Security 2.0

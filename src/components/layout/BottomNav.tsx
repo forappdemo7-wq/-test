@@ -1,6 +1,10 @@
 import React, { memo } from 'react';
 import { motion } from 'motion/react';
+<<<<<<< HEAD
 import { Home, Search, PlusSquare, Clapperboard } from 'lucide-react';
+=======
+import { Home, Compass, Plus, Clapperboard } from 'lucide-react';
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 import { useApp } from '../../context/AppContext';
 import { TabType } from '../../types';
 import { prefetchRoute } from '../../lib/prefetch';
@@ -31,52 +35,83 @@ export const BottomNav: React.FC = memo(() => {
     {
       id: 'feed',
       label: 'Home',
+<<<<<<< HEAD
       icon: (
         <Home
           size={24}
           className={activeTab === 'feed' ? 'fill-current stroke-none' : 'stroke-[1.75px]'}
         />
       ),
+=======
+      icon: <Home size={24} className={activeTab === 'feed' ? 'stroke-[2.5px]' : 'stroke-[1.75px]'} />,
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     },
     {
       id: 'explore',
       label: 'Explore',
+<<<<<<< HEAD
       icon: (
         <Search
           size={24}
           className={activeTab === 'explore' ? 'stroke-[2.75px]' : 'stroke-[1.75px]'}
         />
       ),
+=======
+      icon: <Compass size={24} className={activeTab === 'explore' ? 'stroke-[2.5px]' : 'stroke-[1.75px]'} />,
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     },
     {
       id: 'create',
       label: 'Create',
       isCustomAction: true,
       icon: (
+<<<<<<< HEAD
         <PlusSquare
           size={24}
           className="stroke-[1.75px] active:scale-95 transition-transform"
         />
+=======
+        <motion.div
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          className="w-10 h-10 rounded-xl border-2 border-slate-900 dark:border-white flex items-center justify-center bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white shadow-soft-xs"
+        >
+          <Plus size={20} className="stroke-[2.5px]" />
+        </motion.div>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       ),
     },
     {
       id: 'reels',
       label: 'Reels',
+<<<<<<< HEAD
       icon: (
         <Clapperboard
           size={24}
           className={activeTab === 'reels' ? 'fill-current stroke-none' : 'stroke-[1.75px]'}
         />
       ),
+=======
+      icon: <Clapperboard size={24} className={activeTab === 'reels' ? 'stroke-[2.5px]' : 'stroke-[1.75px]'} />,
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     },
     {
       id: 'profile',
       label: 'Profile',
       icon: (
+<<<<<<< HEAD
         <div
           className={`p-[1px] rounded-full transition-all ${
             activeTab === 'profile'
               ? 'ring-2 ring-black dark:ring-white scale-105'
+=======
+        <motion.div
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          className={`p-[1.5px] rounded-full transition-all ${
+            activeTab === 'profile'
+              ? 'ring-2 ring-neutral-900 dark:ring-white scale-105'
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               : 'ring-1 ring-neutral-300 dark:ring-neutral-700'
           }`}
         >
@@ -88,7 +123,11 @@ export const BottomNav: React.FC = memo(() => {
             decoding="async"
             className="w-6 h-6 rounded-full object-cover"
           />
+<<<<<<< HEAD
         </div>
+=======
+        </motion.div>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       ),
     },
   ];
@@ -96,7 +135,11 @@ export const BottomNav: React.FC = memo(() => {
   return (
     <nav
       aria-label="Mobile Navigation"
+<<<<<<< HEAD
       className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-black border-t border-neutral-200 dark:border-neutral-800 px-4 py-2 sm:hidden transition-colors select-none"
+=======
+      className="fixed bottom-0 left-0 right-0 z-30 glass-header border-t border-neutral-200/80 dark:border-neutral-800/80 px-4 py-2 sm:hidden transition-colors select-none"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
@@ -115,12 +158,28 @@ export const BottomNav: React.FC = memo(() => {
               onTouchStart={() => handlePrefetch(item.id)}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
+<<<<<<< HEAD
               className={`relative flex items-center justify-center p-2 transition-transform duration-150 cursor-pointer active:scale-90 ${
                 isActive
                   ? 'text-neutral-950 dark:text-white'
                   : 'text-neutral-900 dark:text-neutral-100 hover:opacity-75'
               }`}
             >
+=======
+              className={`relative flex flex-col items-center justify-center p-2 rounded-2xl transition-colors duration-150 cursor-pointer active:scale-90 focus-visible:ring-2 focus-visible:ring-pink-500 ${
+                isActive
+                  ? 'text-neutral-950 dark:text-white'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'
+              }`}
+            >
+              {isActive && !item.isCustomAction && (
+                <motion.div
+                  layoutId="mobileActiveTabIndicator"
+                  transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                  className="absolute inset-0 bg-neutral-100/90 dark:bg-neutral-800/90 rounded-2xl -z-10"
+                />
+              )}
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               {item.icon}
             </button>
           );

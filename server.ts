@@ -9,7 +9,11 @@ import { config } from './server/config/env.config';
 import { errorHandlerMiddleware, notFoundHandler } from './server/middleware/error-handler.middleware';
 
 async function bootstrap() {
+<<<<<<< HEAD
   logger.info('Initializing 100gram Scalable Backend Services...');
+=======
+  logger.info('Initializing InstaVibe Scalable Backend Services...');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
   // 1. Register async job workers
   initializeJobHandlers();
@@ -40,7 +44,11 @@ async function bootstrap() {
   // 5. Bind immediately to Port 3000 on 0.0.0.0 to satisfy Cloud Run readiness checks
   const PORT = 3000;
   const server = app.listen(PORT, '0.0.0.0', () => {
+<<<<<<< HEAD
     logger.info(`🚀 100gram Server running at http://0.0.0.0:${PORT}`);
+=======
+    logger.info(`🚀 InstaVibe Server running at http://0.0.0.0:${PORT}`);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     logger.info(`📑 Interactive API Documentation: http://0.0.0.0:${PORT}/api/v1/docs`);
   });
 

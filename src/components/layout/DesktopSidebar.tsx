@@ -2,7 +2,10 @@ import React, { useState, memo } from 'react';
 import { motion } from 'motion/react';
 import {
   Home,
+<<<<<<< HEAD
   Search,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   Compass,
   PlusSquare,
   Clapperboard,
@@ -14,7 +17,10 @@ import { useApp } from '../../context/AppContext';
 import { TabType } from '../../types';
 import { SettingsDrawer } from '../profile/SettingsDrawer';
 import { prefetchRoute } from '../../lib/prefetch';
+<<<<<<< HEAD
 import { InstagramCameraIcon, InstagramWordmark } from '../common/InstagramIcons';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 const routeLoaders: Record<string, () => Promise<any>> = {
   feed: () => import('../feed/FeedList'),
@@ -45,13 +51,18 @@ export const DesktopSidebar: React.FC = memo(() => {
   };
 
   const links: {
+<<<<<<< HEAD
     id: TabType | 'search';
+=======
+    id: TabType;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     label: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
     badge?: number;
     action?: () => void;
   }[] = [
     { id: 'feed', label: 'Home', icon: Home },
+<<<<<<< HEAD
     {
       id: 'search',
       label: 'Search',
@@ -60,6 +71,8 @@ export const DesktopSidebar: React.FC = memo(() => {
         setActiveTab('explore');
       },
     },
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     { id: 'explore', label: 'Explore', icon: Compass },
     { id: 'reels', label: 'Reels', icon: Clapperboard },
     {
@@ -86,6 +99,7 @@ export const DesktopSidebar: React.FC = memo(() => {
     <>
       <aside
         aria-label="Main Navigation Sidebar"
+<<<<<<< HEAD
         className="hidden sm:flex flex-col justify-between w-20 xl:w-64 h-screen sticky top-0 border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black p-3 xl:p-4 transition-colors z-20 select-none"
       >
         <div>
@@ -103,11 +117,34 @@ export const DesktopSidebar: React.FC = memo(() => {
               <div className="hidden xl:block">
                 <InstagramWordmark text="100gram" size="lg" className="text-neutral-950 dark:text-white group-hover:opacity-85 transition-opacity" />
               </div>
+=======
+        className="hidden sm:flex flex-col justify-between w-20 xl:w-64 h-screen sticky top-0 border-r border-neutral-200/80 dark:border-neutral-800/80 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-xl p-3 xl:p-4 transition-colors z-20 select-none"
+      >
+        <div>
+          {/* Logo */}
+          <div className="pt-4 pb-8 px-2">
+            <button
+              onClick={() => setActiveTab('feed')}
+              onMouseEnter={() => handlePrefetch('feed')}
+              aria-label="InstaVibe Home"
+              className="flex items-center gap-3 text-left focus:outline-none group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-soft shadow-pink-500/20 xl:hidden group-hover:scale-105 transition-transform">
+                <span className="font-bold text-base tracking-tight">IV</span>
+              </div>
+              <span className="hidden xl:block font-insta-logo text-3xl font-bold tracking-wide text-neutral-950 dark:text-white group-hover:opacity-85 transition-opacity">
+                InstaVibe
+              </span>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             </button>
           </div>
 
           {/* Navigation items */}
+<<<<<<< HEAD
           <nav className="space-y-1 relative" aria-label="Desktop primary links">
+=======
+          <nav className="space-y-1.5 relative" aria-label="Desktop primary links">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             {links.map((link) => {
               const Icon = link.icon;
               const isActive = activeTab === link.id;
@@ -117,6 +154,7 @@ export const DesktopSidebar: React.FC = memo(() => {
                   onClick={() => {
                     if (link.action) {
                       link.action();
+<<<<<<< HEAD
                     } else if (link.id !== 'search') {
                       setActiveTab(link.id as TabType);
                     }
@@ -140,6 +178,34 @@ export const DesktopSidebar: React.FC = memo(() => {
                           : isActive
                           ? 'stroke-[2.75px]'
                           : 'stroke-[1.85px]'
+=======
+                    } else {
+                      setActiveTab(link.id);
+                    }
+                  }}
+                  onMouseEnter={() => handlePrefetch(link.id)}
+                  onTouchStart={() => handlePrefetch(link.id)}
+                  aria-label={link.label}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`relative w-full flex items-center gap-4 px-3.5 py-3 rounded-2xl transition-colors duration-200 group cursor-pointer active:scale-98 focus-visible:ring-2 focus-visible:ring-pink-500 ${
+                    isActive
+                      ? 'font-bold text-neutral-950 dark:text-white'
+                      : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="desktopActiveNavIndicator"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      className="absolute inset-0 bg-neutral-100 dark:bg-neutral-900 rounded-2xl -z-10 shadow-soft-xs"
+                    />
+                  )}
+                  <div className="relative flex items-center justify-center">
+                    <Icon
+                      size={24}
+                      className={`transition-transform duration-200 group-hover:scale-110 ${
+                        isActive ? 'stroke-[2.5px]' : 'stroke-[1.85px]'
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                       }`}
                     />
                     {link.badge !== undefined && link.badge > 0 && (
@@ -147,7 +213,11 @@ export const DesktopSidebar: React.FC = memo(() => {
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+<<<<<<< HEAD
                         className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white dark:ring-black"
+=======
+                        className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white dark:ring-neutral-950 shadow-soft-xs"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                       >
                         {link.badge}
                       </motion.span>
@@ -165,6 +235,7 @@ export const DesktopSidebar: React.FC = memo(() => {
               onTouchStart={() => handlePrefetch('profile')}
               aria-label="My Profile"
               aria-current={activeTab === 'profile' ? 'page' : undefined}
+<<<<<<< HEAD
               className={`relative w-full flex items-center gap-4 px-3.5 py-3 rounded-xl transition-all duration-150 group cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-900 active:scale-98 ${
                 activeTab === 'profile'
                   ? 'font-bold text-neutral-950 dark:text-white'
@@ -175,6 +246,25 @@ export const DesktopSidebar: React.FC = memo(() => {
                 className={`p-[1px] rounded-full transition-all duration-150 ${
                   activeTab === 'profile'
                     ? 'ring-2 ring-neutral-950 dark:ring-white scale-105'
+=======
+              className={`relative w-full flex items-center gap-4 px-3.5 py-3 rounded-2xl transition-colors duration-200 group cursor-pointer active:scale-98 focus-visible:ring-2 focus-visible:ring-pink-500 ${
+                activeTab === 'profile'
+                  ? 'font-bold text-neutral-950 dark:text-white'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white'
+              }`}
+            >
+              {activeTab === 'profile' && (
+                <motion.div
+                  layoutId="desktopActiveNavIndicator"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  className="absolute inset-0 bg-neutral-100 dark:bg-neutral-900 rounded-2xl -z-10 shadow-soft-xs"
+                />
+              )}
+              <div
+                className={`p-[1.5px] rounded-full transition-all duration-200 ${
+                  activeTab === 'profile'
+                    ? 'ring-2 ring-neutral-900 dark:ring-white scale-105'
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                     : 'ring-1 ring-neutral-300 dark:ring-neutral-700 group-hover:ring-neutral-400'
                 }`}
               >
@@ -193,6 +283,7 @@ export const DesktopSidebar: React.FC = memo(() => {
         </div>
 
         {/* Bottom "More" / Settings Action */}
+<<<<<<< HEAD
         <div className="pt-3 border-t border-neutral-200 dark:border-neutral-800">
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -200,6 +291,15 @@ export const DesktopSidebar: React.FC = memo(() => {
             className="w-full flex items-center gap-4 px-3.5 py-3 rounded-xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-900 hover:text-neutral-950 dark:hover:text-white transition-all duration-150 cursor-pointer group active:scale-98"
           >
             <Menu size={24} className="group-hover:scale-105 transition-transform stroke-[1.85px]" />
+=======
+        <div className="pt-3 border-t border-neutral-200/60 dark:border-neutral-800/60">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            aria-label="More options & settings"
+            className="w-full flex items-center gap-4 px-3.5 py-3 rounded-2xl text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900 hover:text-neutral-950 dark:hover:text-white transition-all duration-200 cursor-pointer group active:scale-98 focus-visible:ring-2 focus-visible:ring-pink-500"
+          >
+            <Menu size={24} className="group-hover:scale-110 transition-transform stroke-[1.85px]" />
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             <span className="hidden xl:inline-block text-[15px] font-normal tracking-tight">More</span>
           </button>
         </div>

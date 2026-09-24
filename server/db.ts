@@ -405,6 +405,7 @@ export async function initDatabase() {
       );
     `);
 
+<<<<<<< HEAD
     // 17. Create User Notes Table (Instagram Notes with 24-hour expiration and audio)
     await query(`
       CREATE TABLE IF NOT EXISTS user_notes (
@@ -437,6 +438,11 @@ export async function initDatabase() {
          OR username ILIKE 'testuser_%'
          OR username = 'hi_first_account'
          OR username = 'mobile_test1';
+=======
+    // Clean up any old mock user rows with hardcoded IDs if they exist without real passwords
+    await query(`
+      DELETE FROM users WHERE id IN ('user_current', 'user_marcus', 'user_luna', 'user_sofia', 'user_kai', 'user_amara', 'user_liam', 'user_chloe') AND password_hash IS NULL;
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     `);
 
     console.log('PostgreSQL tables initialized with real-data schema.');

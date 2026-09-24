@@ -344,10 +344,17 @@ export const FeedList: React.FC = () => {
         </div>
 
         {/* Right Desktop Sidebar: User info & Suggested Profiles */}
+<<<<<<< HEAD
         <div className="hidden lg:block w-[320px] space-y-4 pt-4 pl-4 select-none">
           {/* Current User Card */}
           {currentUser && (
             <div className="flex items-center justify-between py-1">
+=======
+        <div className="hidden lg:block w-80 space-y-5 pt-1">
+          {/* Current User Card */}
+          {currentUser && (
+            <div className="flex items-center justify-between p-3.5 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 shadow-soft">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               <div
                 onClick={() => setActiveTab('profile')}
                 className="flex items-center gap-3 cursor-pointer group min-w-0"
@@ -356,10 +363,17 @@ export const FeedList: React.FC = () => {
                   src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'}
                   alt={currentUser.name || currentUser.username}
                   referrerPolicy="no-referrer"
+<<<<<<< HEAD
                   className="w-11 h-11 rounded-full object-cover border border-neutral-200 dark:border-neutral-800 flex-shrink-0"
                 />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-neutral-950 dark:text-white truncate group-hover:underline">
+=======
+                  className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 group-hover:scale-105 transition-transform"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white truncate group-hover:underline">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                     {currentUser.username}
                   </p>
                   <p className="text-xs text-neutral-400 truncate">{currentUser.name}</p>
@@ -377,7 +391,11 @@ export const FeedList: React.FC = () => {
                     openAuthModal('signin');
                   }
                 }}
+<<<<<<< HEAD
                 className="text-xs font-semibold text-[#0095f6] hover:text-[#1877f2] cursor-pointer flex-shrink-0"
+=======
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline cursor-pointer flex-shrink-0"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               >
                 Switch
               </button>
@@ -386,30 +404,49 @@ export const FeedList: React.FC = () => {
 
           {/* Suggested For You */}
           {suggestedUsers.length > 0 && (
+<<<<<<< HEAD
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+=======
+            <div className="p-4 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 shadow-soft space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                   Suggested for you
                 </span>
                 <button
                   onClick={() => setActiveTab('explore')}
+<<<<<<< HEAD
                   className="text-xs font-semibold text-neutral-900 dark:text-white hover:opacity-75 cursor-pointer"
+=======
+                  className="text-xs font-semibold text-neutral-900 dark:text-white hover:underline cursor-pointer"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                 >
                   See All
                 </button>
               </div>
 
+<<<<<<< HEAD
               <div className="space-y-3 pt-1">
+=======
+              <div className="space-y-3">
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                 {suggestedUsers.map((user) => (
                   <div key={user.id} className="flex items-center justify-between gap-3">
                     <div
                       onClick={() => setSelectedUserProfile(user)}
+<<<<<<< HEAD
                       className="flex items-center gap-3 min-w-0 cursor-pointer group"
+=======
+                      className="flex items-center gap-2.5 min-w-0 cursor-pointer group"
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                     >
                       <img
                         src={user.avatar}
                         alt={user.username}
                         referrerPolicy="no-referrer"
+<<<<<<< HEAD
                         className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-neutral-800 flex-shrink-0"
                       />
                       <div className="min-w-0 text-xs">
@@ -418,16 +455,33 @@ export const FeedList: React.FC = () => {
                         </p>
                         <p className="text-neutral-400 truncate text-[11px]">
                           Suggested for you
+=======
+                        className="w-10 h-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 group-hover:opacity-90 transition-opacity flex-shrink-0"
+                      />
+                      <div className="min-w-0 text-xs">
+                        <p className="font-bold text-neutral-900 dark:text-white truncate group-hover:underline">
+                          {user.username}
+                        </p>
+                        <p className="text-neutral-400 truncate text-[11px]">
+                          {user.followersCount.toLocaleString()} followers
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                         </p>
                       </div>
                     </div>
 
                     <button
                       onClick={() => toggleFollowUser(user.id)}
+<<<<<<< HEAD
                       className={`text-xs font-semibold transition-colors cursor-pointer active:scale-95 flex-shrink-0 ${
                         user.isFollowing
                           ? 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                           : 'text-[#0095f6] hover:text-[#1877f2]'
+=======
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer active:scale-95 flex-shrink-0 ${
+                        user.isFollowing
+                          ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                          : 'text-blue-500 hover:text-blue-600 dark:text-blue-400 font-bold'
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
                       }`}
                     >
                       {user.isFollowing ? 'Following' : 'Follow'}
@@ -438,6 +492,7 @@ export const FeedList: React.FC = () => {
             </div>
           )}
 
+<<<<<<< HEAD
           {/* Footer Meta */}
           <div className="pt-4 text-[11px] text-neutral-400 dark:text-neutral-500 space-y-3">
             <div className="flex flex-wrap gap-x-1.5 gap-y-1">
@@ -454,6 +509,26 @@ export const FeedList: React.FC = () => {
             </div>
             <p className="uppercase font-normal text-[11px] text-neutral-400 dark:text-neutral-500 tracking-wide">
               © 2026 100GRAM FROM META
+=======
+          {/* Quick Refresh Data Pill */}
+          <div className="p-3 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/80 dark:border-neutral-800/80 shadow-soft flex items-center justify-between text-xs">
+            <span className="text-neutral-500 dark:text-neutral-400 font-medium">Smart Cache Active</span>
+            <button
+              onClick={handleRefresh}
+              className="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} /> Sync
+            </button>
+          </div>
+
+          {/* Footer Meta */}
+          <div className="px-3 text-[11px] text-neutral-400 dark:text-neutral-500 space-y-2">
+            <div className="flex flex-wrap gap-x-2 gap-y-1">
+              <span>About</span> • <span>Help</span> • <span>Press</span> • <span>API</span> • <span>Jobs</span> • <span>Privacy</span> • <span>Terms</span>
+            </div>
+            <p className="uppercase font-semibold tracking-wider text-[10px] text-neutral-400 dark:text-neutral-600">
+              © 2026 INSTAVIBE
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
             </p>
           </div>
         </div>

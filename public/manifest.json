@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "name": "100gram - Social Media & Stories",
   "short_name": "100gram",
   "description": "A parody social media platform with interactive stories, feeds, reels, direct messages, and explore discovery.",
+=======
+  "name": "InstaVibe - Social Media & Stories",
+  "short_name": "InstaVibe",
+  "description": "A responsive, feature-rich social media platform with interactive stories, feeds, reels, direct messages, and explore discovery.",
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",

@@ -37,6 +37,7 @@ export function createExpressApp(): Express {
   app.use(requestIdMiddleware);
   app.use(requestLoggerMiddleware);
 
+<<<<<<< HEAD
   // Health check alias for cloud container orchestrators
   app.get('/health', (req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
@@ -44,6 +45,11 @@ export function createExpressApp(): Express {
 
   // Mount API Router exclusively under /api
   app.use('/api', apiRouter);
+=======
+  // Mount API Router on /api and root fallback
+  app.use('/api', apiRouter);
+  app.use('/', apiRouter);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
   return app;
 }

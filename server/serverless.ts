@@ -47,11 +47,14 @@ export default async function handler(req: any, res: any) {
       resolve(undefined);
     });
 
+<<<<<<< HEAD
     // Ensure req.url is routed to /api if stripped by serverless provider
     if (req.url && !req.url.startsWith('/api')) {
       req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
     }
 
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     // Execute Express application
     app(req, res, (err: any) => {
       if (err) {

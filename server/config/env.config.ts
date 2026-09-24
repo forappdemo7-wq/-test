@@ -94,7 +94,11 @@ export const config: EnvironmentConfig = {
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX || '120', 10),
   },
   app: {
+<<<<<<< HEAD
     name: '100gram Scalable API',
+=======
+    name: 'InstaVibe Scalable API',
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     version: '1.0.0',
     apiVersion: 'v1',
     clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',

@@ -36,6 +36,7 @@ export class MessageRepository extends BaseRepository<any> {
 
   async markChatSeen(chatId: string, currentUserId: string): Promise<void> {
     if (chatId && chatId.startsWith('chat_')) {
+<<<<<<< HEAD
       const rest = chatId.slice(5);
       let otherUserId = '';
       if (rest.startsWith(currentUserId + '_')) {
@@ -45,6 +46,11 @@ export class MessageRepository extends BaseRepository<any> {
       }
 
       if (otherUserId) {
+=======
+      const parts = chatId.replace('chat_', '').split('_');
+      if (parts.length >= 2) {
+        const otherUserId = parts[0] === currentUserId ? parts[1] : parts[0];
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
         await query(
           `UPDATE messages SET is_seen = true WHERE receiver_id = $1 AND sender_id = $2`,
           [currentUserId, otherUserId]

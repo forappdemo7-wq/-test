@@ -16,7 +16,10 @@ import {
 } from 'lucide-react';
 import { AudioTrack } from '../../types';
 import { POPULAR_SOUNDTRACKS, AUDIO_CATEGORIES } from '../../data/trendingAudio';
+<<<<<<< HEAD
 import { STORAGE_KEYS, safeGetJSON, safeSetJSON } from '../../constants/storage';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 interface AudioTrackSelectorModalProps {
   isOpen: boolean;
@@ -35,7 +38,16 @@ export const AudioTrackSelectorModal: React.FC<AudioTrackSelectorModalProps> = (
   const [selectedCategory, setSelectedCategory] = useState('Trending');
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [savedTrackIds, setSavedTrackIds] = useState<string[]>(() => {
+<<<<<<< HEAD
     return safeGetJSON<string[]>(STORAGE_KEYS.SAVED_SOUNDS, ['track_1', 'track_4']);
+=======
+    try {
+      const saved = localStorage.getItem('instavibe_saved_sounds');
+      return saved ? JSON.parse(saved) : ['track_1', 'track_4'];
+    } catch {
+      return ['track_1', 'track_4'];
+    }
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -89,7 +101,15 @@ export const AudioTrackSelectorModal: React.FC<AudioTrackSelectorModalProps> = (
       const next = prev.includes(trackId)
         ? prev.filter((id) => id !== trackId)
         : [...prev, trackId];
+<<<<<<< HEAD
       safeSetJSON(STORAGE_KEYS.SAVED_SOUNDS, next);
+=======
+      try {
+        localStorage.setItem('instavibe_saved_sounds', JSON.stringify(next));
+      } catch (err) {
+        console.warn('Failed to save sound state:', err);
+      }
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       return next;
     });
   };

@@ -6,7 +6,10 @@ import { BottomNav } from './components/layout/BottomNav';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { InAppMessageToast } from './components/messages/InAppMessageToast';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+<<<<<<< HEAD
 import { FeatureErrorBoundary } from './components/common/FeatureErrorBoundary';
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 import { AuthPage } from './components/auth/AuthPage';
 import { Toaster } from 'react-hot-toast';
 import {
@@ -18,6 +21,7 @@ import {
   ProfileSkeleton,
 } from './components/common/Skeletons';
 
+<<<<<<< HEAD
 // Auto-retrying lazy loader for tabs and overlay modals
 const lazyWithRetry = (factory: () => Promise<any>) =>
   lazy(async () => {
@@ -46,10 +50,30 @@ const NotificationsView = lazyWithRetry(() =>
   import('./components/notifications/NotificationsView').then((m) => ({ default: m.NotificationsView }))
 );
 const ProfileView = lazyWithRetry(() =>
+=======
+// Route Code Splitting: Lazy loaded primary views
+const FeedList = lazy(() =>
+  import('./components/feed/FeedList').then((m) => ({ default: m.FeedList }))
+);
+const ExploreGrid = lazy(() =>
+  import('./components/explore/ExploreGrid').then((m) => ({ default: m.ExploreGrid }))
+);
+const ReelsViewer = lazy(() =>
+  import('./components/reels/ReelsViewer').then((m) => ({ default: m.ReelsViewer }))
+);
+const DirectMessagesView = lazy(() =>
+  import('./components/messages/DirectMessagesView').then((m) => ({ default: m.DirectMessagesView }))
+);
+const NotificationsView = lazy(() =>
+  import('./components/notifications/NotificationsView').then((m) => ({ default: m.NotificationsView }))
+);
+const ProfileView = lazy(() =>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   import('./components/profile/ProfileView').then((m) => ({ default: m.ProfileView }))
 );
 
 // Code Splitting: Lazy loaded modals & overlay sheets
+<<<<<<< HEAD
 const StoryViewer = lazyWithRetry(() =>
   import('./components/stories/StoryViewer').then((m) => ({ default: m.StoryViewer }))
 );
@@ -80,6 +104,35 @@ const AuthModal = lazyWithRetry(() =>
 const AudioDetailModal = lazyWithRetry(() =>
   import('./components/audio/AudioDetailModal').then((m) => ({ default: m.AudioDetailModal }))
 );
+=======
+const StoryViewer = lazy(() =>
+  import('./components/stories/StoryViewer').then((m) => ({ default: m.StoryViewer }))
+);
+const CommentsModal = lazy(() =>
+  import('./components/feed/CommentsModal').then((m) => ({ default: m.CommentsModal }))
+);
+const ShareModal = lazy(() =>
+  import('./components/feed/ShareModal').then((m) => ({ default: m.ShareModal }))
+);
+const PostDetailModal = lazy(() =>
+  import('./components/feed/PostDetailModal').then((m) => ({ default: m.PostDetailModal }))
+);
+const CreateModal = lazy(() =>
+  import('./components/create/CreateModal').then((m) => ({ default: m.CreateModal }))
+);
+const EditProfileModal = lazy(() =>
+  import('./components/profile/EditProfileModal').then((m) => ({ default: m.EditProfileModal }))
+);
+const UserListModal = lazy(() =>
+  import('./components/profile/UserListModal').then((m) => ({ default: m.UserListModal }))
+);
+const UserProfileModal = lazy(() =>
+  import('./components/profile/UserProfileModal').then((m) => ({ default: m.UserProfileModal }))
+);
+const AuthModal = lazy(() =>
+  import('./components/auth/AuthModal').then((m) => ({ default: m.AuthModal }))
+);
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
 
 const MainLayout: React.FC = () => {
   const {
@@ -103,9 +156,12 @@ const MainLayout: React.FC = () => {
     isCreateOpen,
     isEditProfileOpen,
     userListModal,
+<<<<<<< HEAD
     activeAudioTrack,
     closeAudioDetail,
     openCreateWithAudio,
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   } = useApp();
 
   if (!isAuthenticated || !currentUser) {
@@ -154,6 +210,7 @@ const MainLayout: React.FC = () => {
               className="w-full h-full"
             >
               {activeTab === 'feed' && (
+<<<<<<< HEAD
                 <FeatureErrorBoundary featureName="Feed">
                   <Suspense fallback={<FeedListSkeleton />}>
                     <FeedList />
@@ -194,6 +251,36 @@ const MainLayout: React.FC = () => {
                     <ProfileView />
                   </Suspense>
                 </FeatureErrorBoundary>
+=======
+                <Suspense fallback={<FeedListSkeleton />}>
+                  <FeedList />
+                </Suspense>
+              )}
+              {activeTab === 'explore' && (
+                <Suspense fallback={<ExploreSkeleton />}>
+                  <ExploreGrid />
+                </Suspense>
+              )}
+              {activeTab === 'reels' && (
+                <Suspense fallback={<ReelsSkeleton />}>
+                  <ReelsViewer />
+                </Suspense>
+              )}
+              {activeTab === 'messages' && (
+                <Suspense fallback={<MessagesSkeleton />}>
+                  <DirectMessagesView />
+                </Suspense>
+              )}
+              {activeTab === 'notifications' && (
+                <Suspense fallback={<NotificationsSkeleton />}>
+                  <NotificationsView />
+                </Suspense>
+              )}
+              {activeTab === 'profile' && (
+                <Suspense fallback={<ProfileSkeleton />}>
+                  <ProfileView />
+                </Suspense>
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
               )}
             </motion.div>
           </AnimatePresence>
@@ -225,6 +312,7 @@ const MainLayout: React.FC = () => {
             initialMode={authModalMode}
           />
         )}
+<<<<<<< HEAD
         {activeAudioTrack && (
           <AudioDetailModal
             track={activeAudioTrack}
@@ -232,6 +320,8 @@ const MainLayout: React.FC = () => {
             onUseSound={(track) => openCreateWithAudio(track, 'reel')}
           />
         )}
+=======
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
       </Suspense>
     </div>
   );

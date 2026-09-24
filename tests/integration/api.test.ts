@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createExpressApp } from '../../server/app';
 
+<<<<<<< HEAD
 describe('100gram REST API (Integration Tests)', () => {
+=======
+describe('InstaVibe REST API (Integration Tests)', () => {
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
   const app = createExpressApp();
 
   it('GET /api/v1/health should return system status and healthy database connection', async () => {
@@ -16,14 +20,22 @@ describe('100gram REST API (Integration Tests)', () => {
     const res = await request(app).get('/api/v1/swagger.json');
     expect(res.status).toBe(200);
     expect(res.body.openapi).toBe('3.0.3');
+<<<<<<< HEAD
     expect(res.body.info.title).toContain('100gram');
+=======
+    expect(res.body.info.title).toContain('InstaVibe');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     expect(res.body.paths).toHaveProperty('/posts');
   });
 
   it('GET /api/v1/docs should render interactive Swagger UI documentation', async () => {
     const res = await request(app).get('/api/v1/docs');
     expect(res.status).toBe(200);
+<<<<<<< HEAD
     expect(res.text).toContain('100gram Backend Architecture API');
+=======
+    expect(res.text).toContain('InstaVibe Backend Architecture API');
+>>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
     expect(res.text).toContain('swagger-ui');
   });
 
