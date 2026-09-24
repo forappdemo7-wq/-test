@@ -6,10 +6,9 @@ import { BottomNav } from './components/layout/BottomNav';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { InAppMessageToast } from './components/messages/InAppMessageToast';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-<<<<<<< HEAD
 import { FeatureErrorBoundary } from './components/common/FeatureErrorBoundary';
-=======
->>>>>>> 549b875b284a18b3eee88ce6733c5379cb0c7987
+import { AuthPage } from './components/auth/AuthPage';
+import { Toaster } from 'react-hot-toast';
 import { AuthPage } from './components/auth/AuthPage';
 import { Toaster } from 'react-hot-toast';
 import {
